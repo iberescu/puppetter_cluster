@@ -150,16 +150,31 @@ class PuppeteerManager {
             }
             case "readMessage": {
                 try {
-                    await page.waitForXPath('/html/body/div[2]/div/div/div[2]/div/div/div/div[1]/div[1]/div[1]/div/div/div/div/div[2]/div[5]/div/span/div/a/div/div[2]/div/div');
-                    const checkMessage = await page.$x('/html/body/div[2]/div/div/div[2]/div/div/div/div[1]/div[1]/div[1]/div/div/div/div/div[2]/div[5]/div/span/div/a/div/div[2]/div/div');
+                    
+                    //check for notification modal and close it
+                    const notificationModal = await page.$x('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[2]/div/div/div/div/div[2]')
+                    const isNotificationPopUp = await page.evaluate(el => el.length, notificationModal)
+                    
+                    if (isNotificationPopUp) {
+                        await page.waitForXPath('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[2]/div/div/div/div/div[2]/div/div/div[3]/button[2]');
+                        const closeNotificationModal = await page.$x('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[2]/div/div/div/div/div[2]/div/div/div[3]/button[2]')
+                        await page.evaluate(el => el.click(), closeNotificationModal[0])
+                    }
+                    this.sleep('2000');
+                    // /html/body/div[2]/div/div/div[2]/div/div/div/div[1]/div[1]/div[1]/div/div/div/div/div[2]/div[5]/div/span/div/a
+                    // click on message and move to message page
+                    await page.waitForXPath('/html/body/div[2]/div/div/div[2]/div/div/div/div[1]/div[1]/div[1]/div/div/div/div/div[2]/div[5]/div/span/div/a');
+                    const checkMessage = await page.$x('/html/body/div[2]/div/div/div[2]/div/div/div/div[1]/div[1]/div[1]/div/div/div/div/div[2]/div[5]/div/span/div/a');
                     page.evaluate(el => el.click(), checkMessage[0]);
 
-                    await this.sleep('10000')
+                    // check for the unread messages
+                    const unreadMessage = await page.$x('/html/body/div[2]/div/div/div[2]/div/div/div/div[1]/div[1]/div[2]/section/div/div/div/div[1]/div[1]/div/div[3]/div/div/div/div/div[2]/div/div[1]/div/div/div[3]/div/div/span');
+                    page.evaluate(el => el.click(), unreadMessage[0]);
+                    
+                    
+                    // wait for navigation
+                    // page.waitForNavigation();
 
-                    //wait for navigation
-                    page.waitForNavigation();
-
-                    console.log("Navigated to Messages")
 
                     return true;
 
