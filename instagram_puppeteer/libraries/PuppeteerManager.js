@@ -58,19 +58,21 @@ class PuppeteerManager {
             case "getFollowers":
                 try {
 
-                    let followersCount = null;
+                    /*let followersCount = null;
                     await page.waitForXPath('/html/body/div[2]/div/div/div[2]/div/div/div/div[1]/div[1]/div[2]/div[2]/section/main/div/header/section/ul/li[2]/a/span');
                     const getFollowers = await page.$x('/html/body/div[2]/div/div/div[2]/div/div/div/div[1]/div[1]/div[2]/div[2]/section/main/div/header/section/ul/li[2]/a/span');
                     followersCount = await page.evaluate(el => el.getAttribute('title'), getFollowers[0]);
-
-                    /*console.log("Check", newFollowersCount);
-
+                    
                     const getInstagramFollowers = await page.$$eval("span", el => el.map(followers => followers.getAttribute("title")));
                     for(let i = 0; i < getInstagramFollowers.length; i++) {
                         if (getInstagramFollowers[i] !== null) {
                             followersCount = getInstagramFollowers[i];
                         }
                     }*/
+
+                    let followersCount = await page.evaluate(() => {
+                        return document.querySelectorAll('ul > li')[1].querySelectorAll('span')[0].getAttribute('title');
+                    });
 
                     this.getInstagramFollowers = followersCount;
                     return true
@@ -89,18 +91,24 @@ class PuppeteerManager {
                     }
                     
                     // step - 1 Create
-                    const step1 = await page.$x('/html/body/div[2]/div/div/div[2]/div/div/div/div[1]/div[1]/div[1]/div/div/div/div/div[2]/div[7]/div/div/a');
-                    await page.evaluate(el => el.click(), step1[0]);
+                    await page.waitForXPath('//div[contains(text(), "Create")]');
+                    const step_1 = await page.$x('//div[contains(text(), "Create")]');
+                    await page.evaluate(el => el.click(), step_1[0]);
+                    /*const step1 = await page.$x('/html/body/div[2]/div/div/div[2]/div/div/div/div[1]/div[1]/div[1]/div/div/div/div/div[2]/div[7]/div/div/a');
+                    await page.evaluate(el => el.click(), step1[0]);*/
 
                     // wait to open create post popup
-                    page.waitForXPath('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[3]/div/div/div/div/div[2]');
+                    await page.waitForXPath('//div[contains(text(), "Create new post")]');
+                    // page.waitForXPath('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[3]/div/div/div/div/div[2]');
                     
                     // Step - 2 Choose file
-                    await page.waitForXPath('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[3]/div/div/div/div/div[2]/div/div/div/div[2]/div[1]/div/div/div[2]/div/button');
-                    const step2 = await page.$x('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[3]/div/div/div/div/div[2]/div/div/div/div[2]/div[1]/div/div/div[2]/div/button');
+                    await page.waitForXPath('//button[contains(text(), "Select From Computer")]');
+                    const step_2 = await page.$x('//button[contains(text(), "Select From Computer")]');
+                    /*await page.waitForXPath('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[3]/div/div/div/div/div[2]/div/div/div/div[2]/div[1]/div/div/div[2]/div/button');
+                    const step2 = await page.$x('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[3]/div/div/div/div/div[2]/div/div/div/div[2]/div[1]/div/div/div[2]/div/button');*/
                     const [fileChoose1] = await Promise.all([
                       page.waitForFileChooser(),
-                      await page.evaluate(el => el.click(), step2[0])
+                      await page.evaluate(el => el.click(), step_2[0])
                       // page.evaluate(() => document.querySelector('.image-1').click()),
                     ]);
                     await fileChoose1.accept(['/opt/lampp/htdocs/instars/views/img/temp.jpg']);
@@ -114,14 +122,14 @@ class PuppeteerManager {
 
                     // Step - 3 Crop 
                     await page.waitForXPath('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[3]/div/div/div/div/div[2]/div/div/div/div[1]/div/div/div[3]/div/div');
-                    const step3 = await page.$x('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[3]/div/div/div/div/div[2]/div/div/div/div[1]/div/div/div[3]/div/div');
-                    await page.evaluate(el => el.click(), step3[0]);
+                    const step_3 = await page.$x('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[3]/div/div/div/div/div[2]/div/div/div/div[1]/div/div/div[3]/div/div');
+                    await page.evaluate(el => el.click(), step_3[0]);
                     await this.sleep('2000');
 
                     // Step - 4 Edit
                     await page.waitForXPath('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[3]/div/div/div/div/div[2]/div/div/div/div[1]/div/div/div[3]/div/div');
-                    const step4 = await page.$x('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[3]/div/div/div/div/div[2]/div/div/div/div[1]/div/div/div[3]/div/div');
-                    await page.evaluate(el => el.click(), step4[0]);
+                    const step_4 = await page.$x('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[3]/div/div/div/div/div[2]/div/div/div/div[1]/div/div/div[3]/div/div');
+                    await page.evaluate(el => el.click(), step_4[0]);
                     await this.sleep('2000');
 
                     
@@ -152,15 +160,75 @@ class PuppeteerManager {
                 try {
                     
                     //check for notification modal and close it
-                    const notificationModal = await page.$x('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[2]/div/div/div/div/div[2]')
+                    await page.waitForXPath('//span[contains(text(),"Turn on notifications")]')
+                    const notificationModal = await page.$x('//span[contains(text(),"Turn on notifications")]');
                     const isNotificationPopUp = await page.evaluate(el => el.length, notificationModal)
                     
                     if (isNotificationPopUp) {
-                        await page.waitForXPath('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[2]/div/div/div/div/div[2]/div/div/div[3]/button[2]');
-                        const closeNotificationModal = await page.$x('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[2]/div/div/div/div/div[2]/div/div/div[3]/button[2]')
+                        await page.waitForXPath('//button[contains(text(),"Not Now")]')
+                        const closeNotificationModal = await page.$x('//button[contains(text(),"Not Now")]');
                         await page.evaluate(el => el.click(), closeNotificationModal[0])
                     }
-                    this.sleep('2000');
+                    
+                    // check if any unread message
+                    let unreadMessageCount = await page.evaluate(() => {
+                        const label = document.querySelectorAll('a[href="/direct/inbox/"]')[0].getAttribute('aria-label');
+                        const newLabel = label.split(" ");
+                        if (newLabel[0] == "Direct") {
+                            return newLabel[3];
+                        } else {
+                            return false;
+                        }
+                    });
+                    
+                    if (unreadMessageCount > 0) {
+                        await page.waitForSelector('a[href="/direct/inbox/"]');
+                        await page.click('a[href="/direct/inbox/"]');
+                        
+                        // await page.waitForNavigation();
+                        await this.sleep('1000');
+
+                        const accountCount = await page.$x('//div[@role="listitem"]');
+                        const accountCountNumber = await page.evaluate(el => el.length, accountCount);
+                        // console.log("accountCountNumber", accountCountNumber)
+                        for (var i = 0; i < accountCountNumber; i++) {
+                            let unreadMessage = await page.evaluate((i) => {
+                                return document.querySelectorAll('div[role="listitem"]')[i].querySelectorAll('div > div > div')[0].querySelectorAll('div > div > div')[12].querySelectorAll('span').length;
+                            }, i)
+                            
+                            if (unreadMessage) {
+                                const accountButton = await page.$x('//div[@role="listitem"]');
+                                await page.evaluate(el => el.click(), accountButton[i])
+                                await this.sleep('2000')
+                                
+                                const getMessageCount = await page.$x('//div[@dir="auto"]');
+                                const getMessageCounts = await page.evaluate(el => el.length, getMessageCount);
+                                
+                                let getAllTextMessage = [];
+                                for (var i = 0; i < getMessageCounts; i++) {
+                                    const messages = await page.evaluate((i) => {
+                                        return document.querySelectorAll('div[dir="auto"]')[i].textContent;
+                                    }, i)
+
+                                    getAllTextMessage.push(messages);
+                                }
+                                this.message = getAllTextMessage;
+                                await this.sleep('2000')
+                            }    
+                        }
+                        // await this.sleep('80000');
+                        return true
+                    } else {
+                        this.message = "No unread message.";
+                        return true;
+                    }
+
+                    /*await page.waitForSelector('a[href="/direct/inbox/"]');
+                    await page.click('a[href="/direct/inbox/"]');
+                    
+                    await page.waitForNavigation();
+                    await this.sleep('1000');
+                    
                     // /html/body/div[2]/div/div/div[2]/div/div/div/div[1]/div[1]/div[1]/div/div/div/div/div[2]/div[5]/div/span/div/a
                     // click on message and move to message page
                     await page.waitForXPath('/html/body/div[2]/div/div/div[2]/div/div/div/div[1]/div[1]/div[1]/div/div/div/div/div[2]/div[5]/div/span/div/a');
@@ -169,7 +237,7 @@ class PuppeteerManager {
 
                     // check for the unread messages
                     const unreadMessage = await page.$x('/html/body/div[2]/div/div/div[2]/div/div/div/div[1]/div[1]/div[2]/section/div/div/div/div[1]/div[1]/div/div[3]/div/div/div/div/div[2]/div/div[1]/div/div/div[3]/div/div/span');
-                    page.evaluate(el => el.click(), unreadMessage[0]);
+                    page.evaluate(el => el.click(), unreadMessage[0]);*/
                     
                     
                     // wait for navigation
@@ -185,35 +253,36 @@ class PuppeteerManager {
             }
             case "sendMessage": {
                 try {
-                    //wait for the message button
-                    await page.waitForXPath('/html/body/div[2]/div/div/div[2]/div/div/div/div[1]/div[1]/div[2]/div[2]/section/main/div/header/section/div[1]/div[1]/div/div[2]/div');
-                    const messageButton = await page.$x('/html/body/div[2]/div/div/div[2]/div/div/div/div[1]/div[1]/div[2]/div[2]/section/main/div/header/section/div[1]/div[1]/div/div[2]/div');
-                    await page.evaluate(el => el.click(), messageButton[0]);
+                    
+                    const messageButton = await page.$x('//div[contains(text(),"Message")]');
+                    await page.evaluate(el => el.click(), messageButton[1])
+                    await this.sleep('2000');
 
                     //wait for navigation
-                    page.waitForNavigation();
+                    await page.waitForNavigation();
+                    await this.sleep('1000');
 
-                    // wait for notification popup
-                    await page.waitForXPath('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[2]/div/div/div/div/div[2]');
-                    // close notification popup
-                    await page.waitForXPath('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[2]/div/div/div/div/div[2]/div/div/div[3]/button[2]')
-                    const buttonNotNow = await page.$x('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[2]/div/div/div/div/div[2]/div/div/div[3]/button[2]')
-                    await page.evaluate(el => el.click(), buttonNotNow[0]);
+                    //check for notification modal and close it
+                    await page.waitForXPath('//span[contains(text(),"Turn on notifications")]')
+                    const notificationModal = await page.$x('//span[contains(text(),"Turn on notifications")]');
+                    const isNotificationPopUp = await page.evaluate(el => el.length, notificationModal)
 
-                    await this.sleep('1000')
-
+                    // close notification modal
+                    if (isNotificationPopUp) {
+                        const closeNotificationModal = await page.$x('//button[contains(text(),"Not Now")]');
+                        await page.evaluate(el => el.click(), closeNotificationModal[0])
+                    }
+                    this.sleep('2000')
+                    
                     await page.waitForSelector('div[aria-describedby="Message"]');
                     await page.click('div[aria-describedby="Message"]');
                     await page.keyboard.type(command.message, { delay: 100 });
                     
-                    await this.sleep('2000');
+                    await this.sleep('1000');
 
-                    await page.waitForXPath('/html/body/div[2]/div/div/div[2]/div/div/div/div[1]/div[1]/div[2]/section/div/div/div/div[1]/div[2]/div/div/div/div/div/div[2]/div/div/div[2]/div/div/div[3]');
-                    const sendMessage = await page.$x('/html/body/div[2]/div/div/div[2]/div/div/div/div[1]/div[1]/div[2]/section/div/div/div/div[1]/div[2]/div/div/div/div/div/div[2]/div/div/div[2]/div/div/div[3]');
+                    const sendMessage = await page.$x('//div[contains(text(),"Send")]');
                     const buttonName = await page.evaluate(el => el.click(), sendMessage[0]);
-
-                    await this.sleep('2000')
-
+                    
                     this.message = "Message Sent";
                     return true;
 
@@ -224,14 +293,14 @@ class PuppeteerManager {
             }
             case "followProfile": {
                 try {
-                    await page.waitForXPath('html/body/div[2]/div/div/div[2]/div/div/div/div[1]/div[1]/div[2]/div[2]/section/main/div/header/section/div[1]/div[1]/div/div[1]/button/div/div');
-                    const followButton = await page.$x('html/body/div[2]/div/div/div[2]/div/div/div/div[1]/div[1]/div[2]/div[2]/section/main/div/header/section/div[1]/div[1]/div/div[1]/button/div/div');
+                    await page.waitForXPath('//div[contains(text(),"Follow")]');
+                    const followButton = await page.$x('//div[contains(text(),"Follow")]');
                     const button = await page.evaluate(el => el.textContent, followButton[0]);
                     
                     //Follow                     
                     if (button === "Follow") {
-                        await page.waitForXPath('html/body/div[2]/div/div/div[2]/div/div/div/div[1]/div[1]/div[2]/div[2]/section/main/div/header/section/div[1]/div[1]/div/div[1]/button/div/div');
-                        const followButton = await page.$x('html/body/div[2]/div/div/div[2]/div/div/div/div[1]/div[1]/div[2]/div[2]/section/main/div/header/section/div[1]/div[1]/div/div[1]/button/div/div');
+                        await page.waitForXPath('//div[contains(text(),"Follow")]');
+                        const followButton = await page.$x('//div[contains(text(),"Follow")]');
                         await page.evaluate(el => el.click(), followButton[0]);
 
                         this.sleep(2000)
