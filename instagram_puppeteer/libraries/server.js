@@ -3,6 +3,10 @@ const fileSystem = require('fs');
 const os = require('os');
 
 class server {
+  /**
+   * Get user profile followes
+   * 
+   */ 
   async getFollowers(args, res) {
     const followersCount = await this.loadCookie().then(async (result) => {
         let data = args.body
@@ -21,6 +25,22 @@ class server {
       return followersCount;
   }
 
+  async getInstagramHandler(arg) {
+    let pMng = require('./PuppeteerManager')
+    let puppeteerMng = new pMng.PuppeteerManager(arg)
+    try {
+      let followersCount = await puppeteerMng.getIgFollowers().then(result => {
+        return result
+      })
+      return followersCount;
+    } catch (error) {
+      console.log(error)
+    }
+  }
+  /**
+   * Create a new instagram post on profile
+   * 
+   */ 
   async createInstagramPost(args, res) {
     const createPostMessage = await this.loadCookie().then(async (result) => {
       let data = args.body
@@ -34,19 +54,6 @@ class server {
       return resp;
     });
     return createPostMessage;
-  }
-
-  async getInstagramHandler(arg) {
-    let pMng = require('./PuppeteerManager')
-    let puppeteerMng = new pMng.PuppeteerManager(arg)
-    try {
-      let followersCount = await puppeteerMng.getIgFollowers().then(result => {
-        return result
-      })
-      return followersCount;
-    } catch (error) {
-      console.log(error)
-    }
   }
 
   /**
@@ -65,6 +72,80 @@ class server {
       } catch (error) {
         console.log(error)
       }
+  }
+
+  /**
+   * Send & Read Message
+   * 
+   */ 
+  async sendReadInstagramMessage(args, res) {
+    const sendReadMessage = await this.loadCookie().then(async (result) => {
+      let data = args.body
+      const resp = await this.sendReadInstagramMessageHandler(data).then(result => {
+        let response = {
+            msg: result
+          }
+        console.log('done', response);
+        return response;
+      })
+      return resp;
+    });
+    return sendReadMessage;
+  }
+
+  /**
+ * @param 
+ * Send & Read Message
+ * 
+ */ 
+  async sendReadInstagramMessageHandler(arg){
+    let pMng = require('./PuppeteerManager')
+    let puppeteerMng = new pMng.PuppeteerManager(arg)
+    try {
+      let followersCount = await puppeteerMng.instagramMessages().then(result => {
+        return result
+      })
+      return followersCount;
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  /**
+   * Follow user profiles
+   * 
+   */ 
+  async followInstagramUser(args, res) {
+    const sendReadMessage = await this.loadCookie().then(async (result) => {
+      let data = args.body
+      const resp = await this.instagramFollowUserHandler(data).then(result => {
+        let response = {
+            msg: result
+          }
+        console.log('done', response);
+        return response;
+      })
+      return resp;
+    });
+    return sendReadMessage;
+  }
+
+  /**
+  * Method for Following 
+  * instagram user profiles
+  * 
+  */ 
+  async instagramFollowUserHandler(arg) {
+  let pMng = require('./PuppeteerManager')
+    let puppeteerMng = new pMng.PuppeteerManager(arg)
+    try {
+      let followersCount = await puppeteerMng.instagramFollowUser().then(result => {
+        return result
+      })
+      return followersCount;
+    } catch (error) {
+      console.log(error)
+    }
   }
 
   async loadCookie() {

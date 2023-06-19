@@ -159,7 +159,7 @@ class PuppeteerManager {
             case "readMessage": {
                 try {
                     
-                    //check for notification modal and close it
+                    // check for notification modal and close it
                     await page.waitForXPath('//span[contains(text(),"Turn on notifications")]')
                     const notificationModal = await page.$x('//span[contains(text(),"Turn on notifications")]');
                     const isNotificationPopUp = await page.evaluate(el => el.length, notificationModal)
@@ -191,60 +191,63 @@ class PuppeteerManager {
                         const accountCount = await page.$x('//div[@role="listitem"]');
                         const accountCountNumber = await page.evaluate(el => el.length, accountCount);
                         // console.log("accountCountNumber", accountCountNumber)
+                        let accountMessages = [];
                         for (var i = 0; i < accountCountNumber; i++) {
                             let unreadMessage = await page.evaluate((i) => {
                                 return document.querySelectorAll('div[role="listitem"]')[i].querySelectorAll('div > div > div')[0].querySelectorAll('div > div > div')[12].querySelectorAll('span').length;
                             }, i)
-                            
+
                             if (unreadMessage) {
+                                const getAccountUserName = await page.evaluate((i) => {
+                                    return document.querySelectorAll('div[role="listitem"]')[i].innerText.split('\n');
+                                }, i)
+
+                                const userName = getAccountUserName[0];
+
                                 const accountButton = await page.$x('//div[@role="listitem"]');
                                 await page.evaluate(el => el.click(), accountButton[i])
                                 await this.sleep('2000')
                                 
+                                // const getMessageCount = await page.$x('//span[contains(text(), "'+ userName +'")]');
                                 const getMessageCount = await page.$x('//div[@dir="auto"]');
                                 const getMessageCounts = await page.evaluate(el => el.length, getMessageCount);
                                 
-                                let getAllTextMessage = [];
-                                for (var i = 0; i < getMessageCounts; i++) {
-                                    const messages = await page.evaluate((i) => {
-                                        return document.querySelectorAll('div[dir="auto"]')[i].textContent;
-                                    }, i)
+                                await page.waitForSelector('div[role="row"]');
+                                this.sleep('2000');
+                                
+                                let newMessages = [];
+                                console.log("Message Counts", getMessageCounts);
+                                for (var j = getMessageCounts - 1; j >= getMessageCounts - command.messageCount; j--) {
 
-                                    getAllTextMessage.push(messages);
+                                    const checkUser = await page.evaluate((j, userName) => {
+                                        return document.querySelectorAll('div[role="row"]')[j].innerText.startsWith(userName)
+                                    }, j, userName)
+
+                                    let messages;
+                                    if (checkUser) {
+                                        console.log(j);
+                                        messages = await page.evaluate((j) => {
+                                            return document.querySelectorAll('div[dir="auto"]')[j].textContent;
+                                        }, j)
+                                    }
+
+                                    /*const getMessages = await page.$x('//span[contains(text(), "'+ userName +'")]');
+                                    const messages = await page.evaluate(el => el.textContent, getMessageCount[j]);
+                                    console.log("Message", messages);*/
+                                    newMessages.push(messages);
                                 }
-                                this.message = getAllTextMessage;
+                                accountMessages.push(newMessages);
+                                
+                                this.message = accountMessages;
                                 await this.sleep('2000')
                             }    
                         }
-                        // await this.sleep('80000');
+                        
                         return true
                     } else {
                         this.message = "No unread message.";
                         return true;
                     }
-
-                    /*await page.waitForSelector('a[href="/direct/inbox/"]');
-                    await page.click('a[href="/direct/inbox/"]');
-                    
-                    await page.waitForNavigation();
-                    await this.sleep('1000');
-                    
-                    // /html/body/div[2]/div/div/div[2]/div/div/div/div[1]/div[1]/div[1]/div/div/div/div/div[2]/div[5]/div/span/div/a
-                    // click on message and move to message page
-                    await page.waitForXPath('/html/body/div[2]/div/div/div[2]/div/div/div/div[1]/div[1]/div[1]/div/div/div/div/div[2]/div[5]/div/span/div/a');
-                    const checkMessage = await page.$x('/html/body/div[2]/div/div/div[2]/div/div/div/div[1]/div[1]/div[1]/div/div/div/div/div[2]/div[5]/div/span/div/a');
-                    page.evaluate(el => el.click(), checkMessage[0]);
-
-                    // check for the unread messages
-                    const unreadMessage = await page.$x('/html/body/div[2]/div/div/div[2]/div/div/div/div[1]/div[1]/div[2]/section/div/div/div/div[1]/div[1]/div/div[3]/div/div/div/div/div[2]/div/div[1]/div/div/div[3]/div/div/span');
-                    page.evaluate(el => el.click(), unreadMessage[0]);*/
-                    
-                    
-                    // wait for navigation
-                    // page.waitForNavigation();
-
-
-                    return true;
 
                 } catch(error) {
                     console.log(error);
@@ -253,14 +256,14 @@ class PuppeteerManager {
             }
             case "sendMessage": {
                 try {
-                    
+                    await page.waitForXPath('//div[contains(text(),"Message")]')
                     const messageButton = await page.$x('//div[contains(text(),"Message")]');
-                    await page.evaluate(el => el.click(), messageButton[1])
+                    await page.evaluate(el => el.click(), messageButton[0])
                     await this.sleep('2000');
 
                     //wait for navigation
-                    await page.waitForNavigation();
-                    await this.sleep('1000');
+                    // await page.waitForNavigation();
+                    // await this.sleep('1000');
 
                     //check for notification modal and close it
                     await page.waitForXPath('//span[contains(text(),"Turn on notifications")]')
