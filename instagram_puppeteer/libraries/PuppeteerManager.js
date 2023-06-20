@@ -7,7 +7,7 @@ class PuppeteerManager {
         this.existingCommands = args.commands;
         this.getInstagramFollowers = 0;
         this.newPostUrl = args.imageUrl;
-        this.message = '';
+        this.return = '';
         this.captionText = args.captionText;
     }
 
@@ -149,7 +149,7 @@ class PuppeteerManager {
                     
                     await this.sleep('4000');
                     
-                    this.message = "Post created successfully..!!";
+                    this.return = "Post created successfully..!!";
                     return true;
                 } catch (error) {
                     console.log("error", error)
@@ -212,40 +212,42 @@ class PuppeteerManager {
                                 const getMessageCount = await page.$x('//div[@dir="auto"]');
                                 const getMessageCounts = await page.evaluate(el => el.length, getMessageCount);
                                 
-                                await page.waitForSelector('div[role="row"]');
+                                await page.waitForSelector('div[role="row"]', {
+                                    visible: true,
+                                });
                                 this.sleep('2000');
+                                    
+                                const rows = await page.evaluate(() => {
+                                    return document.querySelectorAll('div[role="row"]').length;
+                                });
                                 
                                 let newMessages = [];
-                                console.log("Message Counts", getMessageCounts);
-                                for (var j = getMessageCounts - 1; j >= getMessageCounts - command.messageCount; j--) {
-
+                                for (var j = rows - 1; j >= 0; j--) {
                                     const checkUser = await page.evaluate((j, userName) => {
                                         return document.querySelectorAll('div[role="row"]')[j].innerText.startsWith(userName)
                                     }, j, userName)
-
                                     let messages;
                                     if (checkUser) {
-                                        console.log(j);
                                         messages = await page.evaluate((j) => {
-                                            return document.querySelectorAll('div[dir="auto"]')[j].textContent;
+                                            return document.querySelectorAll('div[role="row"]')[j].querySelectorAll('div[dir="auto"]')[0].innerText;
                                         }, j)
+
+                                        newMessages.push(messages);
                                     }
 
-                                    /*const getMessages = await page.$x('//span[contains(text(), "'+ userName +'")]');
-                                    const messages = await page.evaluate(el => el.textContent, getMessageCount[j]);
-                                    console.log("Message", messages);*/
-                                    newMessages.push(messages);
+                                    if (newMessages.length == command.messageCount) {
+                                        break;
+                                    }
                                 }
+
                                 accountMessages.push(newMessages);
-                                
-                                this.message = accountMessages;
                                 await this.sleep('2000')
                             }    
                         }
-                        
+                        this.return = accountMessages; 
                         return true
                     } else {
-                        this.message = "No unread message.";
+                        this.return = "No unread message.";
                         return true;
                     }
 
@@ -286,7 +288,7 @@ class PuppeteerManager {
                     const sendMessage = await page.$x('//div[contains(text(),"Send")]');
                     const buttonName = await page.evaluate(el => el.click(), sendMessage[0]);
                     
-                    this.message = "Message Sent";
+                    this.return = "Message Sent";
                     return true;
 
                 } catch(error) {
@@ -308,10 +310,10 @@ class PuppeteerManager {
 
                         this.sleep(2000)
 
-                        this.message = "Followed";
+                        this.return = "Followed";
                         return true;
                     } else {
-                        this.message = "Already Followed";
+                        this.return = "Already Followed";
                         return false;
                     }
                 } catch(error) {
@@ -333,17 +335,17 @@ class PuppeteerManager {
 
     async createInstagramPost() {
         await this.runPuppeteer()
-        return this.message;
+        return this.return;
     }
 
     async instagramFollowUser() {
         await this.runPuppeteer()
-        return this.message;
+        return this.return;
     }
 
     async instagramMessages() {
         await this.runPuppeteer()
-        return this.message;
+        return this.return;
     }
 
     async downloadImage(url, filepath) {
