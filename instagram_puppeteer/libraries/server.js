@@ -292,6 +292,30 @@ app.post('/api/handleMessage', async (req, res) => {
 });
 
 /**
+ * Handle Messages in Instagram
+ * Send or Read message
+ * 
+ */ 
+app.post('/api/scrollwall', async (req, res) => {
+  try {
+    let data = req.body
+    console.log(req.body.url)
+    
+    await loadCookie().then(async (result) => {
+      await instagramScrollWallHandler(data).then(result => {
+        let response = {
+            msg: result,
+          }
+        console.log('done')
+        res.send(response)
+      })
+    });
+  } catch (error) {
+    console.log(error)
+  }
+});
+
+/**
  * scrap followers from Instagram 
  * @params url, type
  * 
@@ -362,6 +386,24 @@ async function instagramMessageHandler(arg){
     console.log(error)
   }
 }
+
+/**
+ * Scroll Wall Handler
+ * 
+ */  
+async function instagramScrollWallHandler(arg){
+  let pMng = require('./PuppeteerManager')
+  let puppeteerMng = new pMng.PuppeteerManager(arg)
+  try {
+    let followersCount = await puppeteerMng.scrollWall().then(result => {
+      return result
+    })
+    return followersCount;
+  } catch (error) {
+    console.log(error)
+  }
+}
+
 /**
  * load cookies
  * 

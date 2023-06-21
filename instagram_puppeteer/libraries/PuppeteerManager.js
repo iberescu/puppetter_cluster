@@ -192,6 +192,7 @@ class PuppeteerManager {
                         const accountCountNumber = await page.evaluate(el => el.length, accountCount);
                         // console.log("accountCountNumber", accountCountNumber)
                         let accountMessages = [];
+                        let userMessages = [];
                         for (var i = 0; i < accountCountNumber; i++) {
                             let unreadMessage = await page.evaluate((i) => {
                                 return document.querySelectorAll('div[role="listitem"]')[i].querySelectorAll('div > div > div')[0].querySelectorAll('div > div > div')[12].querySelectorAll('span').length;
@@ -203,6 +204,8 @@ class PuppeteerManager {
                                 }, i)
 
                                 const userName = getAccountUserName[0];
+                                
+                                userMessages.push(userName);
 
                                 const accountButton = await page.$x('//div[@role="listitem"]');
                                 await page.evaluate(el => el.click(), accountButton[i])
@@ -242,8 +245,11 @@ class PuppeteerManager {
 
                                 accountMessages.push(newMessages);
                                 await this.sleep('2000')
+
+                                userMessages.push(newMessages);
                             }    
                         }
+                        console.log("User messages", userMessages);
                         this.return = accountMessages; 
                         return true
                     } else {
@@ -321,6 +327,50 @@ class PuppeteerManager {
                     return false
                 }
             }
+            case "scrollWall": {
+                try {
+                    const z_scroll_number = command.scrollNumber;
+                    const x_wait_after_each_scroll = command.waitTimeAfterScroll;
+
+                    // check for notification modal and close it
+                    await page.waitForXPath('//span[contains(text(),"Turn on notifications")]')
+                    const notificationModal = await page.$x('//span[contains(text(),"Turn on notifications")]');
+                    const isNotificationPopUp = await page.evaluate(el => el.length, notificationModal)
+                    
+                    if (isNotificationPopUp) {
+                        await page.waitForXPath('//button[contains(text(),"Not Now")]')
+                        const closeNotificationModal = await page.$x('//button[contains(text(),"Not Now")]');
+                        await page.evaluate(el => el.click(), closeNotificationModal[0])
+                    }
+
+                    await this.sleep(1000);
+
+                    const elem = await page.$('main > div');
+                    const boundingBox = await elem.boundingBox();
+
+                    console.log(boundingBox);
+
+                    for (var i = 0; i < z_scroll_number; i++) {
+                        await page.mouse.move(
+                          boundingBox.x + boundingBox.width / 2,
+                          boundingBox.y + boundingBox.height / 2
+                        );
+
+                        await page.mouse.wheel({deltaY: 100});
+
+                        await this.sleep(x_wait_after_each_scroll);
+
+                        console.log("loop count", i)
+                    }
+                    
+                    await this.sleep('2000');
+                    this.return = "Page scrolled " + z_scroll_number + " number of times. With " + x_wait_after_each_scroll + " milliseconds wait time after each scroll";
+                    return true;
+                } catch( error ) {
+                    console.log("error", error);
+                    return false;
+                }
+            }
         }
     }
 
@@ -346,6 +396,11 @@ class PuppeteerManager {
     async instagramMessages() {
         await this.runPuppeteer()
         return this.return;
+    }
+
+    async scrollWall() {
+        await this.runPuppeteer()
+        return this.return;   
     }
 
     async downloadImage(url, filepath) {
