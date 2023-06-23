@@ -330,7 +330,10 @@ class PuppeteerManager {
             case "scrollWall": {
                 try {
                     const z_scroll_number = command.scrollNumber;
-                    const x_wait_after_each_scroll = command.waitTimeAfterScroll;
+                    const x_wait_after_each_scroll = command.waitTimeAfterScroll * 1000; //convert api seconds into milliseconds
+                    const y_postToLike = command.postToLike;
+
+                    const postToLikePerScroll = y_postToLike / z_scroll_number;
 
                     // check for notification modal and close it
                     await page.waitForXPath('//span[contains(text(),"Turn on notifications")]')
@@ -355,12 +358,16 @@ class PuppeteerManager {
                           boundingBox.x + boundingBox.width / 2,
                           boundingBox.y + boundingBox.height / 2
                         );
-
-                        await page.mouse.wheel({deltaY: 100});
-
+                        // scroll
+                        await page.mouse.wheel({deltaY: 500});
+                        // like post
+                        const likeButton = await page.evaluate(() => {
+                            return document.querySelectorAll('button > div > svg > title')
+                        });
+                        console.log(likeButton)
                         await this.sleep(x_wait_after_each_scroll);
 
-                        console.log("loop count", i)
+                        
                     }
                     
                     await this.sleep('2000');
