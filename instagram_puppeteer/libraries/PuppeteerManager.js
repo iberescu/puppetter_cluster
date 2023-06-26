@@ -333,8 +333,8 @@ class PuppeteerManager {
                     const x_wait_after_each_scroll = command.waitTimeAfterScroll * 1000; //convert api seconds into milliseconds
                     const y_postToLike = command.postToLike;
 
-                    const postToLikePerScroll = y_postToLike / z_scroll_number;
-
+                    const postToLikePerScroll = Math.ceil(y_postToLike / z_scroll_number);
+                    // console.log("postToLikePerScroll", postToLikePerScroll);
                     // check for notification modal and close it
                     await page.waitForXPath('//span[contains(text(),"Turn on notifications")]')
                     const notificationModal = await page.$x('//span[contains(text(),"Turn on notifications")]');
@@ -352,7 +352,7 @@ class PuppeteerManager {
                     const boundingBox = await elem.boundingBox();
 
                     console.log(boundingBox);
-
+                    let likePosts = 0;
                     for (var i = 0; i < z_scroll_number; i++) {
                         await page.mouse.move(
                           boundingBox.x + boundingBox.width / 2,
@@ -360,41 +360,26 @@ class PuppeteerManager {
                         );
                         // scroll
                         await page.mouse.wheel({deltaY: 500});
+                        
                         // like post
+                        if (postToLikePerScroll == 1) {
+                            await page.evaluate((i) => {
+                                return document.querySelectorAll('article')[i].querySelectorAll('section')[0].querySelectorAll('span > button')[0].click();
+                            }, i)
+                        } else {
+                            for (var j = 0; j < postToLikePerScroll; j++) {
+                                console.log(likePosts)
+                                await page.evaluate((likePosts) => {
+                                    return document.querySelectorAll('article')[likePosts].querySelectorAll('section')[0].querySelectorAll('span > button')[0].click();
+                                }, likePosts)
 
-                        /*for (var i = Things.length - 1; i >= 0; i--) {
-                            Things[i]
-                        }*/
-                        await page.evaluate((i) => {
-                            return document.querySelectorAll('article')[i].querySelectorAll('section')[0].querySelectorAll('span > button')[0].click();
-                        }, i)
-                        // const posts = await page.$$('article div:nth-child(3) img[decoding="auto"]');
-
-                        // for(j = 0; j < 3; j++) {
-                        //     posts[j].click();
-                        // }
-
-                        // const likeButton = await page.$x('/html/body/div[2]/div/div/div/div[2]/div/div/div/div[1]/div[1]/div[2]/section/main/div[1]/section/div[1]/div[3]/div/div/div[1]/div/article[1]/div/div[3]/div/div/section[1]/span[1]/button');
-                        // await page.evaluate(el => el.click(), likeButton[0]);
+                                likePosts++;
+                                // console.log(likePosts)
+                            }
+                        }
                         
-                        /*for (var j = 0; j < postToLikePerScroll; j++) {
-                            await page.$$('article')[j].childNodes[0].childNodes[2].querySelectorAll('button')[0].click;
-                        }*/
-
-
-                        /*for(j = 0; j < postToLikePerScroll; j++) {
-                            
-                            console.log(posts[j])
-                        }*/
-                        /*await page.waitForSelector('article[role="presentation"]');
-                        const button = await page.evaluate(() => {
-                            return document.querySelectorAll('article[role="presentation"]')//[0].querySelectorAll('div:nth-child(3)')[0].querySelectorAll('section')[0].querySelectorAll('div')[1].click
-                        });
-                        console.log(button)
-                        await this.sleep('5000')*/
+                        // wait for x seconds after each scroll
                         await this.sleep(x_wait_after_each_scroll);
-
-                        
                     }
                     
                     await this.sleep('2000');
