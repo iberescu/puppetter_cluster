@@ -8,11 +8,11 @@ const mysql = require(`mysql-await`);
 async function connectToDatabase() {
   try {
     const connection = await mysql.createConnection({
-      host: '23.88.116.13',
-      user: 'root',
-      password: 'ehLmYFnS25dqg5ys',
-      database: 'instars',
-      post: '3306'
+      host: '',
+      user: '',
+      password: '',
+      database: '',
+      post: ''
     });
     console.log('Connected to the database');
     return connection;
