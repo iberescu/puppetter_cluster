@@ -390,6 +390,14 @@ class PuppeteerManager {
                     return false;
                 }
             }
+            case "readPost": {
+                try {
+                    
+                } catch ( error ) {
+                    console.log("error", error);
+                    return false;
+                }
+            }
         }
     }
 

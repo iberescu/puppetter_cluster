@@ -148,6 +148,23 @@ class server {
     }
   }
 
+  /**
+   * scroll user instagram wall and like the posts. 
+   * 
+   */
+  async scrollInstagramWallHandler(arg) {
+    let pMng = require('./PuppeteerManager')
+    let puppeteerMng = new pMng.PuppeteerManager(arg)
+    try {
+      let followersCount = await puppeteerMng.scrollWall().then(result => {
+        return result
+      })
+      return followersCount;
+    } catch (error) {
+      console.log(error)
+    }
+  } 
+
   async loadCookie() {
 
     const path = './cookies.json'

@@ -2,17 +2,18 @@ const fs = require('fs');
 const client = require('https');
 const cron = require("node-cron");
 const mysql = require(`mysql-await`);
+const server = require('../../libraries/server.js');
 
 
 
 async function connectToDatabase() {
   try {
     const connection = await mysql.createConnection({
-      host: '',
-      user: '',
-      password: '',
-      database: '',
-      post: ''
+      host: '23.88.116.13',
+      user: 'root',
+      password: 'ehLmYFnS25dqg5ys',
+      database: 'instars',
+      post: '3306'
     });
     console.log('Connected to the database');
     return connection;
