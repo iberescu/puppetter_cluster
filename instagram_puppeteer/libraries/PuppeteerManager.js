@@ -16,25 +16,47 @@ class PuppeteerManager {
         
         let commands = []
         commands = this.existingCommands
-        const browser = await puppeteer.launch({
+        /*const browser = await puppeteer.launch({
             headless: false,
             args: [
                 "--no-sandbox",
                 "--disable-gpu",
             ],
             defaultViewport: null
-        });
+        });*/
+
+        // const IS_PRODUCTION = process.env.NODE_ENV === 'production';
+        const IS_PRODUCTION = false;
+
+        const getBrowser = () =>
+          IS_PRODUCTION
+            ? // Connect to browserless so we don't run Chrome on the same hardware in production
+            puppeteer.connect({ 
+                browserWSEndpoint: 'wss://chrome.browserless.io?token=c0ea113f-d72e-4a3b-a3ec-71224200911e&headless=false',
+                slowMo: 1000, 
+            })
+            : // Run the browser locally while in development
+            puppeteer.launch({
+                headless: true,
+                args: [
+                    "--no-sandbox",
+                    "--disable-gpu",
+                ],
+                defaultViewport: null
+            });
+
+        const browser = await getBrowser();
         
         let page = await browser.newPage();
-
         await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36');
-
+        
         const cookiesArr = require('../cookies.json');
         for (let cookie of cookiesArr) {
             await page.setCookie(cookie);
         }
 
         await page.goto(this.url);
+       
         await this.sleep(6000)
 
         let timeout = 6000
@@ -91,8 +113,8 @@ class PuppeteerManager {
                     }
                     
                     // step - 1 Create
-                    await page.waitForXPath('//div[contains(text(), "Create")]');
-                    const step_1 = await page.$x('//div[contains(text(), "Create")]');
+                    await page.waitForXPath('//span[contains(text(), "Create")]');
+                    const step_1 = await page.$x('//span[contains(text(), "Create")]');
                     await page.evaluate(el => el.click(), step_1[0]);
                     /*const step1 = await page.$x('/html/body/div[2]/div/div/div[2]/div/div/div/div[1]/div[1]/div[1]/div/div/div/div/div[2]/div[7]/div/div/a');
                     await page.evaluate(el => el.click(), step1[0]);*/
@@ -272,10 +294,17 @@ class PuppeteerManager {
                     //wait for navigation
                     // await page.waitForNavigation();
                     // await this.sleep('1000');
-
+                     // let source = await page.content();
+                    // OR the faster method that doesn't wait for images to load:
+                    // let source = await page.content({"waitUntil": "domcontentloaded"});
+                    // await fs.writeFileSync('./message_page_new.html', source);
+                    // console.log(source);
+                    
                     //check for notification modal and close it
-                    await page.waitForXPath('//span[contains(text(),"Turn on notifications")]')
-                    const notificationModal = await page.$x('//span[contains(text(),"Turn on notifications")]');
+                    // await page.waitForXPath('//span[contains(text(),"Turn on notifications")]')
+                    // const notificationModal = await page.$x('//span[contains(text(),"Turn on notifications")]');
+                    await page.waitForXPath('//div/span[.="Turn on notifications"]');
+                    const notificationModal = await page.$x('//div/span[.="Turn on notifications"]');
                     const isNotificationPopUp = await page.evaluate(el => el.length, notificationModal)
 
                     // close notification modal
@@ -293,6 +322,8 @@ class PuppeteerManager {
 
                     const sendMessage = await page.$x('//div[contains(text(),"Send")]');
                     const buttonName = await page.evaluate(el => el.click(), sendMessage[0]);
+
+                    await this.sleep('2000');
                     
                     this.return = "Message Sent";
                     return true;
@@ -334,7 +365,7 @@ class PuppeteerManager {
                     const y_postToLike = command.postToLike;
 
                     const postToLikePerScroll = Math.ceil(y_postToLike / z_scroll_number);
-                    // console.log("postToLikePerScroll", postToLikePerScroll);
+                    
                     // check for notification modal and close it
                     await page.waitForXPath('//span[contains(text(),"Turn on notifications")]')
                     const notificationModal = await page.$x('//span[contains(text(),"Turn on notifications")]');
@@ -350,7 +381,7 @@ class PuppeteerManager {
 
                     const elem = await page.$('main > div');
                     const boundingBox = await elem.boundingBox();
-
+                    console.log("postToLikePerScroll", postToLikePerScroll)
                     console.log(boundingBox);
                     let likePosts = 0;
                     for (var i = 0; i < z_scroll_number; i++) {
@@ -359,7 +390,9 @@ class PuppeteerManager {
                           boundingBox.y + boundingBox.height / 2
                         );
                         // scroll
-                        await page.mouse.wheel({deltaY: 500});
+                        await page.mouse.wheel({deltaY: 700});
+                        
+                        await this.sleep('2000')
                         
                         // like post
                         if (postToLikePerScroll == 1) {
@@ -370,7 +403,8 @@ class PuppeteerManager {
                             for (var j = 0; j < postToLikePerScroll; j++) {
                                 console.log(likePosts)
                                 await page.evaluate((likePosts) => {
-                                    return document.querySelectorAll('article')[likePosts].querySelectorAll('section')[0].querySelectorAll('span > button')[0].click();
+                                    // return document.querySelectorAll('article')[likePosts].querySelectorAll('section')[0].querySelectorAll('span > button')[0].click();
+                                    return document.querySelectorAll('article')[likePosts].querySelector('div').children[2].querySelector('div').children[0].querySelector('div > span').querySelectorAll('div')[0].click();
                                 }, likePosts)
 
                                 likePosts++;
