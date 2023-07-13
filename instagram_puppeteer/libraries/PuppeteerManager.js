@@ -37,7 +37,7 @@ class PuppeteerManager {
             })
             : // Run the browser locally while in development
             puppeteer.launch({
-                headless: true,
+                headless: false,
                 args: [
                     "--no-sandbox",
                     "--disable-gpu",
@@ -300,6 +300,12 @@ class PuppeteerManager {
                     // await fs.writeFileSync('./message_page_new.html', source);
                     // console.log(source);
                     
+                    /*const text = await page.evaluate(() => {
+                        return document.evaluate('//span[contains(text(),"Turn on notifications")]', document, null, xpath.XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.textContent;
+                    })*/
+                    //const check = page.XPathResult();
+                    const checkValue = page.evaluate('//span[contains(text(),"Turn on notifications")]', page, null, page.xpath.XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.textContent;
+
                     //check for notification modal and close it
                     // await page.waitForXPath('//span[contains(text(),"Turn on notifications")]')
                     // const notificationModal = await page.$x('//span[contains(text(),"Turn on notifications")]');
