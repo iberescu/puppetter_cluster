@@ -9,6 +9,7 @@ class PuppeteerManager {
         this.newPostUrl = args.imageUrl;
         this.return = '';
         this.captionText = args.captionText;
+        this.is_production = true;
     }
 
     async runPuppeteer() {
@@ -25,15 +26,15 @@ class PuppeteerManager {
             defaultViewport: null
         });*/
 
-        // const IS_PRODUCTION = process.env.NODE_ENV === 'production';
-        const IS_PRODUCTION = false;
-
+        // const this.is_production = process.env.NODE_ENV === 'production';
+        
         const getBrowser = () =>
-          IS_PRODUCTION
+          this.is_production
             ? // Connect to browserless so we don't run Chrome on the same hardware in production
             puppeteer.connect({ 
-                browserWSEndpoint: 'wss://chrome.browserless.io?token=c0ea113f-d72e-4a3b-a3ec-71224200911e&headless=false',
-                slowMo: 1000, 
+                browserWSEndpoint:'wss://chrome.browserless.io?token=c0ea113f-d72e-4a3b-a3ec-71224200911e&headless=true&--window-size=1280,720&ignoreDefaultArgs=true',
+                // browserWSEndpoint: 'wss://chrome.browserless.io?token=c0ea113f-d72e-4a3b-a3ec-71224200911e&headless=false',
+                // slowMo: 1000, 
             })
             : // Run the browser locally while in development
             puppeteer.launch({
@@ -56,7 +57,12 @@ class PuppeteerManager {
         }
 
         await page.goto(this.url);
-       
+        
+        /*await page.setViewport({
+            width: 1920,
+            height: 1080
+        })*/
+
         await this.sleep(6000)
 
         let timeout = 6000
@@ -124,7 +130,8 @@ class PuppeteerManager {
                     // page.waitForXPath('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[3]/div/div/div/div/div[2]');
                     
                     // Step - 2 Choose file
-                    await page.waitForXPath('//button[contains(text(), "Select From Computer")]');
+                    //await page.waitForXPath('//button[contains(text(), "Select From Computer")]', 'visible');
+                    // await page.waitForXPath('//button[contains(text(), "Select From Computer")]');
                     const step_2 = await page.$x('//button[contains(text(), "Select From Computer")]');
                     /*await page.waitForXPath('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[3]/div/div/div/div/div[2]/div/div/div/div[2]/div[1]/div/div/div[2]/div/button');
                     const step2 = await page.$x('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[3]/div/div/div/div/div[2]/div/div/div/div[2]/div[1]/div/div/div[2]/div/button');*/
@@ -304,31 +311,47 @@ class PuppeteerManager {
                         return document.evaluate('//span[contains(text(),"Turn on notifications")]', document, null, xpath.XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.textContent;
                     })*/
                     //const check = page.XPathResult();
-                    const checkValue = page.evaluate('//span[contains(text(),"Turn on notifications")]', page, null, page.xpath.XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.textContent;
+                    // const checkValue = await page.evaluate('//span[contains(text(),"Turn on notifications")]', page, null, page.XPathResult, null);
+
+                    // console.log(checkValue);
+
+                    // return true;
 
                     //check for notification modal and close it
                     // await page.waitForXPath('//span[contains(text(),"Turn on notifications")]')
                     // const notificationModal = await page.$x('//span[contains(text(),"Turn on notifications")]');
-                    await page.waitForXPath('//div/span[.="Turn on notifications"]');
-                    const notificationModal = await page.$x('//div/span[.="Turn on notifications"]');
-                    const isNotificationPopUp = await page.evaluate(el => el.length, notificationModal)
+                    console.log('Count', '1');
+                    // await page.waitForXPath('//div/span[.="Turn on notifications"]');
 
+                    let notificationModal;
+                    if (this.is_production) {
+                        notificationModal = await page.$x('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[2]/div/div/div/div/div[2]/div/div/div[2]/span[1]');
+                    } else {
+                        await page.waitForXPath('//span[contains(text(),"Turn on notifications")]')
+                        notificationModal = await page.$x('//span[contains(text(),"Turn on notifications")]');
+                    }
+                    // let notificationModal = await page.$x('//span[contains(text(),"Turn on notifications")]');
+                    const isNotificationPopUp = await page.evaluate(el => el.length, notificationModal)
+                    // console.log("isNotificationPopUp", isNotificationPopUp)
+                    // return;
                     // close notification modal
                     if (isNotificationPopUp) {
+                        console.log('2');
                         const closeNotificationModal = await page.$x('//button[contains(text(),"Not Now")]');
                         await page.evaluate(el => el.click(), closeNotificationModal[0])
                     }
-                    this.sleep('2000')
-                    
+                    // this.sleep('4000')
+                    // return;
                     await page.waitForSelector('div[aria-describedby="Message"]');
                     await page.click('div[aria-describedby="Message"]');
                     await page.keyboard.type(command.message, { delay: 100 });
                     
                     await this.sleep('1000');
 
+                    // const sendMessage = await page.$x('//div[contains(text(),"Send")]')
                     const sendMessage = await page.$x('//div[contains(text(),"Send")]');
-                    const buttonName = await page.evaluate(el => el.click(), sendMessage[0]);
-
+                    const getSendButtonLength = await page.evaluate(el => el.length, sendMessage);
+                    const buttonName = await page.evaluate(el => el.click(), sendMessage[getSendButtonLength-1]);
                     await this.sleep('2000');
                     
                     this.return = "Message Sent";
