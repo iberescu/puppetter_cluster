@@ -9,7 +9,7 @@ class PuppeteerManager {
         this.newPostUrl = args.imageUrl;
         this.return = '';
         this.captionText = args.captionText;
-        this.is_production = true;
+        this.is_production = false;
     }
 
     async runPuppeteer() {
@@ -131,16 +131,67 @@ class PuppeteerManager {
                     
                     // Step - 2 Choose file
                     //await page.waitForXPath('//button[contains(text(), "Select From Computer")]', 'visible');
+                    
                     // await page.waitForXPath('//button[contains(text(), "Select From Computer")]');
-                    const step_2 = await page.$x('//button[contains(text(), "Select From Computer")]');
+                    // const step_2 = await page.$x('//button[contains(text(), "Select From Computer")]');
+                    
+                    /*test purpose*/
+                    // const buttonText = await page.evaluate(() => {
+                    //         let buttons = document.querySelectorAll('button');
+                    //         buttons.forEach((e, k) => {
+                    //             if(e.textContent === "Select From Computer"){
+                    //                 e.click();
+                    //             }
+                    //         })
+                    //         return "button clicked";
+                    //     })
+                    // console.log(buttonText);    
+                    /*test puepose*/
+
                     /*await page.waitForXPath('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[3]/div/div/div/div/div[2]/div/div/div/div[2]/div[1]/div/div/div[2]/div/button');
                     const step2 = await page.$x('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[3]/div/div/div/div/div[2]/div/div/div/div[2]/div[1]/div/div/div[2]/div/button');*/
-                    const [fileChoose1] = await Promise.all([
+                    
+                    /*const [fileChoose] = await Promise.all([
                       page.waitForFileChooser(),
-                      await page.evaluate(el => el.click(), step_2[0])
+                      page.evaluate(() => {
+                        let buttons = document.querySelectorAll('button');
+                        buttons.forEach((e, k) => {
+                            if(e.textContent === "Select From Computer"){
+                                e.click();
+                            }
+                        })
+                        return "File selected";
+                      })
+                      // await page.evaluate(el => el.click(), step_2[0])
                       // page.evaluate(() => document.querySelector('.image-1').click()),
-                    ]);
-                    await fileChoose1.accept(['/opt/lampp/htdocs/instars/views/img/temp.jpg']);
+                    ]);*/
+
+                    let futureFileChooser = page.waitForFileChooser();
+                    // some button that triggers file selection
+                    await page.evaluate(() => {
+                        let buttons = document.querySelectorAll('button');
+                        buttons.forEach((e, k) => {
+                            if(e.textContent === "Select From Computer"){
+                                e.click();
+                            }
+                        })
+                        return "File selected";
+                    })
+                    const fileChoose = await futureFileChooser;
+
+                    
+                    // await fileChoose.accept(['/opt/lampp/htdocs/instars/views/img/temp.jpg']);
+                    // await this.sleep('2000');
+
+                    // await page.evaluate(() => {
+                    //   const fileInput = document.querySelector('input[type="file"]');
+                    //   fileInput.value = '/opt/lampp/htdocs/instars/views/img/temp.jpg';
+                    //     // return document.querySelectorAll('input[type="file"]')[0];
+
+                    // });
+
+                    // fileInput.click();
+                    // fileInput.accept = '/opt/lampp/htdocs/instars/views/img/temp.jpg';
                     await this.sleep('2000');
 
                     // Step - 2 Choose file
