@@ -9,7 +9,7 @@ class PuppeteerManager {
         this.newPostUrl = args.imageUrl;
         this.return = '';
         this.captionText = args.captionText;
-        this.is_production = false;
+        this.is_production = true;
     }
 
     async runPuppeteer() {
@@ -32,7 +32,7 @@ class PuppeteerManager {
           this.is_production
             ? // Connect to browserless so we don't run Chrome on the same hardware in production
             puppeteer.connect({ 
-                browserWSEndpoint:'wss://chrome.browserless.io?token=c0ea113f-d72e-4a3b-a3ec-71224200911e&headless=true&--window-size=1280,720&ignoreDefaultArgs=true',
+                browserWSEndpoint:'wss://chrome.browserless.io?token=c0ea113f-d72e-4a3b-a3ec-71224200911e&headless=true&--window-size=1280,720&ignoreDefaultArgs=true&stealth',
                 // browserWSEndpoint: 'wss://chrome.browserless.io?token=c0ea113f-d72e-4a3b-a3ec-71224200911e&headless=false',
                 // slowMo: 1000, 
             })
@@ -151,22 +151,33 @@ class PuppeteerManager {
                     /*await page.waitForXPath('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[3]/div/div/div/div/div[2]/div/div/div/div[2]/div[1]/div/div/div[2]/div/button');
                     const step2 = await page.$x('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[3]/div/div/div/div/div[2]/div/div/div/div[2]/div[1]/div/div/div[2]/div/button');*/
                     
-                    /*const [fileChoose] = await Promise.all([
-                      page.waitForFileChooser(),
-                      page.evaluate(() => {
-                        let buttons = document.querySelectorAll('button');
-                        buttons.forEach((e, k) => {
-                            if(e.textContent === "Select From Computer"){
-                                e.click();
-                            }
-                        })
-                        return "File selected";
-                      })
+                    /*Code with changed selector*/
+                    //await page.setContent('<input type="file">');
+
+                    const selectButton = await page.$x('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[3]/div/div/div/div/div[2]/div/div/div/div[2]/div[1]/div/div/div[2]/div/button')
+                    const [fileChoose] = await Promise.all([
+                        //page.waitForSelector('button'),
+                        page.waitForFileChooser(),
+                        page.evaluate(el => el.click(), selectButton[0])
+                        /*page.evaluate(() => {
+                            let buttons = document.querySelectorAll('button');
+                            buttons.forEach((e, k) => {
+                                if(e.textContent === "Select From Computer"){
+                                    e.click();
+                                }
+                            })
+
+                            return "File selected";
+                        }),*/
                       // await page.evaluate(el => el.click(), step_2[0])
                       // page.evaluate(() => document.querySelector('.image-1').click()),
-                    ]);*/
-
-                    let futureFileChooser = page.waitForFileChooser();
+                    ]);
+                    await fileChoose.accept(['/opt/lampp/htdocs/instars/views/img/temp.jpg']);
+                    await this.sleep('2000');
+                    /*Code with changed selector*/
+                    
+                    /*New Code - Mahan*/
+                    /*let futureFileChooser = page.waitForFileChooser();
                     // some button that triggers file selection
                     await page.evaluate(() => {
                         let buttons = document.querySelectorAll('button');
@@ -177,9 +188,22 @@ class PuppeteerManager {
                         })
                         return "File selected";
                     })
-                    const fileChoose = await futureFileChooser;
+                    const fileChoose = await futureFileChooser;*/
+                    /*New Code - Mahan*/
 
-                    
+                    /*New code by HR*/
+                        /*await page.waitForSelector('input[type=file]');
+                        const fileInput = await page.$x('//input[@type="file"]');
+                        await page.evaluate(el => el.click(), fileInput[0]);
+                        console.log("File Input", fileInput);*/
+                        // Set the file path using page.type()
+                        // fileInput.click(); // Ensure the file input has focus
+                        /*await page.type('input[type="file"]', '/opt/lampp/htdocs/instars/views/img/temp.jpg'); // Replace with the actual file path*/
+                        // fileInput.value = '/opt/lampp/htdocs/instars/views/img/temp.jpg';
+                        // fileInput.close;
+                    /*New code by HR*/
+
+                    console.log("Code moved to here")
                     // await fileChoose.accept(['/opt/lampp/htdocs/instars/views/img/temp.jpg']);
                     // await this.sleep('2000');
 
@@ -201,17 +225,42 @@ class PuppeteerManager {
                     await this.sleep('2000');*/
 
                     // Step - 3 Crop 
-                    await page.waitForXPath('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[3]/div/div/div/div/div[2]/div/div/div/div[1]/div/div/div[3]/div/div');
+                    /*await page.waitForXPath('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[3]/div/div/div/div/div[2]/div/div/div/div[1]/div/div/div[3]/div/div');
                     const step_3 = await page.$x('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[3]/div/div/div/div/div[2]/div/div/div/div[1]/div/div/div[3]/div/div');
                     await page.evaluate(el => el.click(), step_3[0]);
-                    await this.sleep('2000');
+                    await this.sleep('2000');*/
 
+                    /*New Code for crop*/
+                    await page.evaluate(() => {
+                        const divs = document.querySelectorAll('div')
+                        divs.forEach((e, k) => {
+                            if(e.textContent == "Next"){
+                                e.click();
+                            }
+                        })
+                        return "Next";
+                    })
+                    await this.sleep('2000');
+                    /*New Code for crop*/
+                    
                     // Step - 4 Edit
-                    await page.waitForXPath('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[3]/div/div/div/div/div[2]/div/div/div/div[1]/div/div/div[3]/div/div');
+                    /*await page.waitForXPath('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[3]/div/div/div/div/div[2]/div/div/div/div[1]/div/div/div[3]/div/div');
                     const step_4 = await page.$x('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[3]/div/div/div/div/div[2]/div/div/div/div[1]/div/div/div[3]/div/div');
                     await page.evaluate(el => el.click(), step_4[0]);
-                    await this.sleep('2000');
+                    await this.sleep('2000');*/
 
+                    /*New Code for Edit*/
+                    await page.evaluate(() => {
+                        const divs = document.querySelectorAll('div')
+                        divs.forEach((e, k) => {
+                            if(e.textContent == "Next"){
+                                e.click();
+                            }
+                        })
+                        return "Next";
+                    })
+                    await this.sleep('2000');
+                    /*New Code for Edit*/
                     
                     // Add text before sharing the post
                     await page.waitForSelector('div[aria-label="Write a caption..."]');
@@ -223,9 +272,22 @@ class PuppeteerManager {
 
                     
                     // Step - 5 Create new post - Share
-                    await page.waitForXPath('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[3]/div/div/div/div/div[2]/div/div/div/div[1]/div/div/div[3]/div/div');
+                    /*await page.waitForXPath('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[3]/div/div/div/div/div[2]/div/div/div/div[1]/div/div/div[3]/div/div');
                     const shareButton = await page.$x('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[3]/div/div/div/div/div[2]/div/div/div/div[1]/div/div/div[3]/div/div');
-                    await page.evaluate(el => el.click(), shareButton[0]);
+                    await page.evaluate(el => el.click(), shareButton[0]);*/
+
+                    /*New Code for Create new post - Share*/
+                    await page.evaluate(() => {
+                        const divs = document.querySelectorAll('div')
+                        divs.forEach((e, k) => {
+                            if(e.textContent == "Share"){
+                                e.click();
+                            }
+                        })
+                        return "Share";
+                    })
+                    await this.sleep('2000');
+                    /*New Code for Create new post - Share*/
                     
                     await this.sleep('4000');
                     
