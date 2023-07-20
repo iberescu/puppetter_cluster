@@ -32,7 +32,7 @@ class PuppeteerManager {
           this.is_production
             ? // Connect to browserless so we don't run Chrome on the same hardware in production
             puppeteer.connect({ 
-                browserWSEndpoint:'wss://chrome.browserless.io?token=c0ea113f-d72e-4a3b-a3ec-71224200911e&headless=true&--window-size=1280,720&ignoreDefaultArgs=true&stealth',
+                browserWSEndpoint:'wss://chrome.browserless.io?token=c0ea113f-d72e-4a3b-a3ec-71224200911e&headless=true&--window-size=1280,800&ignoreDefaultArgs=true&stealth',
                 // browserWSEndpoint: 'wss://chrome.browserless.io?token=c0ea113f-d72e-4a3b-a3ec-71224200911e&headless=false',
                 // slowMo: 1000, 
             })
@@ -122,114 +122,23 @@ class PuppeteerManager {
                     await page.waitForXPath('//span[contains(text(), "Create")]');
                     const step_1 = await page.$x('//span[contains(text(), "Create")]');
                     await page.evaluate(el => el.click(), step_1[0]);
-                    /*const step1 = await page.$x('/html/body/div[2]/div/div/div[2]/div/div/div/div[1]/div[1]/div[1]/div/div/div/div/div[2]/div[7]/div/div/a');
-                    await page.evaluate(el => el.click(), step1[0]);*/
+                    console.log("Step-1 Completed")
 
                     // wait to open create post popup
                     await page.waitForXPath('//div[contains(text(), "Create new post")]');
-                    // page.waitForXPath('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[3]/div/div/div/div/div[2]');
                     
                     // Step - 2 Choose file
-                    //await page.waitForXPath('//button[contains(text(), "Select From Computer")]', 'visible');
-                    
-                    // await page.waitForXPath('//button[contains(text(), "Select From Computer")]');
-                    // const step_2 = await page.$x('//button[contains(text(), "Select From Computer")]');
-                    
-                    /*test purpose*/
-                    // const buttonText = await page.evaluate(() => {
-                    //         let buttons = document.querySelectorAll('button');
-                    //         buttons.forEach((e, k) => {
-                    //             if(e.textContent === "Select From Computer"){
-                    //                 e.click();
-                    //             }
-                    //         })
-                    //         return "button clicked";
-                    //     })
-                    // console.log(buttonText);    
-                    /*test puepose*/
-
-                    /*await page.waitForXPath('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[3]/div/div/div/div/div[2]/div/div/div/div[2]/div[1]/div/div/div[2]/div/button');
-                    const step2 = await page.$x('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[3]/div/div/div/div/div[2]/div/div/div/div[2]/div[1]/div/div/div[2]/div/button');*/
-                    
-                    /*Code with changed selector*/
-                    //await page.setContent('<input type="file">');
-
                     const selectButton = await page.$x('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[3]/div/div/div/div/div[2]/div/div/div/div[2]/div[1]/div/div/div[2]/div/button')
                     const [fileChoose] = await Promise.all([
                         //page.waitForSelector('button'),
                         page.waitForFileChooser(),
                         page.evaluate(el => el.click(), selectButton[0])
-                        /*page.evaluate(() => {
-                            let buttons = document.querySelectorAll('button');
-                            buttons.forEach((e, k) => {
-                                if(e.textContent === "Select From Computer"){
-                                    e.click();
-                                }
-                            })
-
-                            return "File selected";
-                        }),*/
-                      // await page.evaluate(el => el.click(), step_2[0])
-                      // page.evaluate(() => document.querySelector('.image-1').click()),
                     ]);
                     await fileChoose.accept(['/opt/lampp/htdocs/instars/views/img/temp.jpg']);
                     await this.sleep('2000');
+                    console.log("Step-2 Completed")
                     /*Code with changed selector*/
                     
-                    /*New Code - Mahan*/
-                    /*let futureFileChooser = page.waitForFileChooser();
-                    // some button that triggers file selection
-                    await page.evaluate(() => {
-                        let buttons = document.querySelectorAll('button');
-                        buttons.forEach((e, k) => {
-                            if(e.textContent === "Select From Computer"){
-                                e.click();
-                            }
-                        })
-                        return "File selected";
-                    })
-                    const fileChoose = await futureFileChooser;*/
-                    /*New Code - Mahan*/
-
-                    /*New code by HR*/
-                        /*await page.waitForSelector('input[type=file]');
-                        const fileInput = await page.$x('//input[@type="file"]');
-                        await page.evaluate(el => el.click(), fileInput[0]);
-                        console.log("File Input", fileInput);*/
-                        // Set the file path using page.type()
-                        // fileInput.click(); // Ensure the file input has focus
-                        /*await page.type('input[type="file"]', '/opt/lampp/htdocs/instars/views/img/temp.jpg'); // Replace with the actual file path*/
-                        // fileInput.value = '/opt/lampp/htdocs/instars/views/img/temp.jpg';
-                        // fileInput.close;
-                    /*New code by HR*/
-
-                    console.log("Code moved to here")
-                    // await fileChoose.accept(['/opt/lampp/htdocs/instars/views/img/temp.jpg']);
-                    // await this.sleep('2000');
-
-                    // await page.evaluate(() => {
-                    //   const fileInput = document.querySelector('input[type="file"]');
-                    //   fileInput.value = '/opt/lampp/htdocs/instars/views/img/temp.jpg';
-                    //     // return document.querySelectorAll('input[type="file"]')[0];
-
-                    // });
-
-                    // fileInput.click();
-                    // fileInput.accept = '/opt/lampp/htdocs/instars/views/img/temp.jpg';
-                    await this.sleep('2000');
-
-                    // Step - 2 Choose file
-                    /*await page.waitForXPath('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[3]/div/div/div/div/div[2]/div/div/div/div[2]/div[1]/div/div/div[2]/div/button');
-                    const step2 = await page.$x('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[3]/div/div/div/div/div[2]/div/div/div/div[2]/div[1]/div/div/div[2]/div/button');
-                    await page.evaluate(el => el.click(), step2[0]);
-                    await this.sleep('2000');*/
-
-                    // Step - 3 Crop 
-                    /*await page.waitForXPath('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[3]/div/div/div/div/div[2]/div/div/div/div[1]/div/div/div[3]/div/div');
-                    const step_3 = await page.$x('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[3]/div/div/div/div/div[2]/div/div/div/div[1]/div/div/div[3]/div/div');
-                    await page.evaluate(el => el.click(), step_3[0]);
-                    await this.sleep('2000');*/
-
                     /*New Code for crop*/
                     await page.evaluate(() => {
                         const divs = document.querySelectorAll('div')
@@ -241,14 +150,9 @@ class PuppeteerManager {
                         return "Next";
                     })
                     await this.sleep('2000');
+                    console.log("Step-3 Completed")
                     /*New Code for crop*/
                     
-                    // Step - 4 Edit
-                    /*await page.waitForXPath('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[3]/div/div/div/div/div[2]/div/div/div/div[1]/div/div/div[3]/div/div');
-                    const step_4 = await page.$x('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[3]/div/div/div/div/div[2]/div/div/div/div[1]/div/div/div[3]/div/div');
-                    await page.evaluate(el => el.click(), step_4[0]);
-                    await this.sleep('2000');*/
-
                     /*New Code for Edit*/
                     await page.evaluate(() => {
                         const divs = document.querySelectorAll('div')
@@ -260,23 +164,23 @@ class PuppeteerManager {
                         return "Next";
                     })
                     await this.sleep('2000');
+                    console.log("Step-4 Completed")
                     /*New Code for Edit*/
                     
                     // Add text before sharing the post
-                    await page.waitForSelector('div[aria-label="Write a caption..."]');
-                    await page.click('div[aria-label="Write a caption..."]');
+                    if (!this.is_production) {
+                        await page.waitForSelector('div[aria-label="Write a caption..."]');
+                        await page.click('div[aria-label="Write a caption..."]');
+                    } else {
+                        const writeCaption = await page.$x('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[3]/div/div/div/div/div[2]/div/div/div/div[2]/div[2]/div/div/div/div[2]/div[1]/div[1]')
+                        await page.evaluate(el => el.click(), writeCaption[0]);
+                    }
                     
                     await page.keyboard.type(this.captionText, { delay: 100 });
                     await page.keyboard.press('Tab');
                     await this.sleep('2000');
 
-                    
-                    // Step - 5 Create new post - Share
-                    /*await page.waitForXPath('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[3]/div/div/div/div/div[2]/div/div/div/div[1]/div/div/div[3]/div/div');
-                    const shareButton = await page.$x('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[3]/div/div/div/div/div[2]/div/div/div/div[1]/div/div/div[3]/div/div');
-                    await page.evaluate(el => el.click(), shareButton[0]);*/
-
-                    /*New Code for Create new post - Share*/
+                    /*New Code for Create new post - Share (Step-5)*/
                     await page.evaluate(() => {
                         const divs = document.querySelectorAll('div')
                         divs.forEach((e, k) => {
@@ -287,9 +191,10 @@ class PuppeteerManager {
                         return "Share";
                     })
                     await this.sleep('2000');
+                    console.log("Step-5 Completed")
                     /*New Code for Create new post - Share*/
                     
-                    await this.sleep('4000');
+                    await this.sleep('2500');
                     
                     this.return = "Post created successfully..!!";
                     return true;
@@ -302,15 +207,31 @@ class PuppeteerManager {
                 try {
                     
                     // check for notification modal and close it
-                    await page.waitForXPath('//span[contains(text(),"Turn on notifications")]')
+                    /*await page.waitForXPath('//span[contains(text(),"Turn on notifications")]')
                     const notificationModal = await page.$x('//span[contains(text(),"Turn on notifications")]');
                     const isNotificationPopUp = await page.evaluate(el => el.length, notificationModal)
-                    
+
                     if (isNotificationPopUp) {
                         await page.waitForXPath('//button[contains(text(),"Not Now")]')
                         const closeNotificationModal = await page.$x('//button[contains(text(),"Not Now")]');
                         await page.evaluate(el => el.click(), closeNotificationModal[0])
+                    }*/
+
+                    // check for notification modal and close it
+                    let notificationModal;
+                    if (this.is_production) {
+                        notificationModal = await page.$x('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[2]/div/div/div/div/div[2]/div/div/div[2]/span[1]');
+                    } else {
+                        await page.waitForXPath('//span[contains(text(),"Turn on notifications")]')
+                        notificationModal = await page.$x('//span[contains(text(),"Turn on notifications")]');
                     }
+                    
+                    const isNotificationPopUp = await page.evaluate(el => el.length, notificationModal)
+                    if (isNotificationPopUp) {
+                        const closeNotificationModal = await page.$x('//button[contains(text(),"Not Now")]');
+                        await page.evaluate(el => el.click(), closeNotificationModal[0])
+                    }
+                    
                     
                     // check if any unread message
                     let unreadMessageCount = await page.evaluate(() => {
@@ -332,7 +253,7 @@ class PuppeteerManager {
 
                         const accountCount = await page.$x('//div[@role="listitem"]');
                         const accountCountNumber = await page.evaluate(el => el.length, accountCount);
-                        // console.log("accountCountNumber", accountCountNumber)
+                        
                         let accountMessages = [];
                         let userMessages = [];
                         for (var i = 0; i < accountCountNumber; i++) {
@@ -411,31 +332,6 @@ class PuppeteerManager {
                     await page.evaluate(el => el.click(), messageButton[0])
                     await this.sleep('2000');
 
-                    //wait for navigation
-                    // await page.waitForNavigation();
-                    // await this.sleep('1000');
-                     // let source = await page.content();
-                    // OR the faster method that doesn't wait for images to load:
-                    // let source = await page.content({"waitUntil": "domcontentloaded"});
-                    // await fs.writeFileSync('./message_page_new.html', source);
-                    // console.log(source);
-                    
-                    /*const text = await page.evaluate(() => {
-                        return document.evaluate('//span[contains(text(),"Turn on notifications")]', document, null, xpath.XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.textContent;
-                    })*/
-                    //const check = page.XPathResult();
-                    // const checkValue = await page.evaluate('//span[contains(text(),"Turn on notifications")]', page, null, page.XPathResult, null);
-
-                    // console.log(checkValue);
-
-                    // return true;
-
-                    //check for notification modal and close it
-                    // await page.waitForXPath('//span[contains(text(),"Turn on notifications")]')
-                    // const notificationModal = await page.$x('//span[contains(text(),"Turn on notifications")]');
-                    console.log('Count', '1');
-                    // await page.waitForXPath('//div/span[.="Turn on notifications"]');
-
                     let notificationModal;
                     if (this.is_production) {
                         notificationModal = await page.$x('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[2]/div/div/div/div/div[2]/div/div/div[2]/span[1]');
@@ -443,18 +339,13 @@ class PuppeteerManager {
                         await page.waitForXPath('//span[contains(text(),"Turn on notifications")]')
                         notificationModal = await page.$x('//span[contains(text(),"Turn on notifications")]');
                     }
-                    // let notificationModal = await page.$x('//span[contains(text(),"Turn on notifications")]');
+                    
                     const isNotificationPopUp = await page.evaluate(el => el.length, notificationModal)
-                    // console.log("isNotificationPopUp", isNotificationPopUp)
-                    // return;
-                    // close notification modal
                     if (isNotificationPopUp) {
-                        console.log('2');
                         const closeNotificationModal = await page.$x('//button[contains(text(),"Not Now")]');
                         await page.evaluate(el => el.click(), closeNotificationModal[0])
                     }
-                    // this.sleep('4000')
-                    // return;
+                    
                     await page.waitForSelector('div[aria-describedby="Message"]');
                     await page.click('div[aria-describedby="Message"]');
                     await page.keyboard.type(command.message, { delay: 100 });
