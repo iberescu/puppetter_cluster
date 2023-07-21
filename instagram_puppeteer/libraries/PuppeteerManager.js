@@ -245,23 +245,52 @@ class PuppeteerManager {
                     });
                     
                     if (unreadMessageCount > 0) {
-                        await page.waitForSelector('a[href="/direct/inbox/"]');
-                        await page.click('a[href="/direct/inbox/"]');
+                        // console.log("All");
+                        // return;
+                        await page.evaluate(() => {
+                            document.querySelectorAll('a[href="/direct/inbox/"]')[0].click();
+                            return "Messages";
+                        });
+                        this.sleep('2000');
+                        const checkMessages = await page.$x("//span[contains(text(),'Your messages')]")
+                        const checkMessageSection = await page.evaluate(el => el.length, checkMessages)
+                        console.log("Check Message Section", checkMessageSection);
+                        this.sleep('2000');
+
+                        /*Old code to open message section*/
+                        // await page.waitForSelector('a[href="/direct/inbox/"]');
+                        // await page.click('a[href="/direct/inbox/"]');
                         
                         // await page.waitForNavigation();
                         await this.sleep('1000');
 
                         const accountCount = await page.$x('//div[@role="listitem"]');
                         const accountCountNumber = await page.evaluate(el => el.length, accountCount);
-                        
+                        this.sleep('2000');
                         let accountMessages = [];
                         let userMessages = [];
-                        for (var i = 0; i < accountCountNumber; i++) {
-                            let unreadMessage = await page.evaluate((i) => {
-                                return document.querySelectorAll('div[role="listitem"]')[i].querySelectorAll('div > div > div')[0].querySelectorAll('div > div > div')[12].querySelectorAll('span').length;
-                            }, i)
+                        
+                        /*New code*/
+                        const unreadAccounts = await page.$x('//div[contains(@role,"listitem")]//span[contains(@data-visualcompletion,"ignore")]');
+                        const unreadAccountMessages = await page.evaluate(el => el.length, unreadAccounts);
+                        console.log("unreadAccountMessages", unreadAccountMessages);
+                        for (var i = 0; i < unreadAccountMessages; i++) {
+                            console.log(i);
+                        }
+                        console.log("1111");
 
-                            if (unreadMessage) {
+                        return true;
+                        /*New code*/
+
+                        for (var i = 0; i < accountCountNumber; i++) {
+                            
+                            /*let unreadMessage = await page.evaluate((i) => {
+                                return document.querySelectorAll('div[role="listitem"]')[i].outerText//.querySelectorAll('div > div > div')[0].querySelectorAll('div > div > div')[12].querySelectorAll('span').length;
+                            }, i)*/
+
+                            
+                            //console.log("UnreadMessage_check", unreadMessage);
+                            /*if (unreadMessage) {
                                 const getAccountUserName = await page.evaluate((i) => {
                                     return document.querySelectorAll('div[role="listitem"]')[i].innerText.split('\n');
                                 }, i)
@@ -310,8 +339,10 @@ class PuppeteerManager {
                                 await this.sleep('2000')
 
                                 userMessages.push(newMessages);
-                            }    
+                            }*/
+
                         }
+                        return;    
                         console.log("User messages", userMessages);
                         this.return = accountMessages; 
                         return true
