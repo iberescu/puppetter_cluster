@@ -226,15 +226,15 @@ class PuppeteerManager {
                         notificationModal = await page.$x('//span[contains(text(),"Turn on notifications")]');
                     }
                     
-                    const isNotificationPopUp = await page.evaluate(el => el.length, notificationModal)
+                    const isNotificationPopUp = await page.evaluate(el => el.length, notificationModal);
                     if (isNotificationPopUp) {
                         const closeNotificationModal = await page.$x('//button[contains(text(),"Not Now")]');
                         await page.evaluate(el => el.click(), closeNotificationModal[0])
                     }
-                    
-                    
-                    // check if any unread message
-                    let unreadMessageCount = await page.evaluate(() => {
+                    this.sleep('2000');
+
+                    // check if any unread message from homepage
+                    let unreadAccounts = await page.evaluate(() => {
                         const label = document.querySelectorAll('a[href="/direct/inbox/"]')[0].getAttribute('aria-label');
                         const newLabel = label.split(" ");
                         if (newLabel[0] == "Direct") {
@@ -243,53 +243,75 @@ class PuppeteerManager {
                             return false;
                         }
                     });
-                    
-                    if (unreadMessageCount > 0) {
-                        // console.log("All");
-                        // return;
-                        await page.evaluate(() => {
-                            document.querySelectorAll('a[href="/direct/inbox/"]')[0].click();
-                            return "Messages";
-                        });
-                        this.sleep('2000');
-                        const checkMessages = await page.$x("//span[contains(text(),'Your messages')]")
-                        const checkMessageSection = await page.evaluate(el => el.length, checkMessages)
-                        console.log("Check Message Section", checkMessageSection);
-                        this.sleep('2000');
+                    this.sleep('2000');
 
-                        /*Old code to open message section*/
+                    // proceed for read messages if any
+                    if (unreadAccounts > 0) {
+                        
+                        /*Old code to open message section - Working fine with puppeteer headful*/
                         // await page.waitForSelector('a[href="/direct/inbox/"]');
                         // await page.click('a[href="/direct/inbox/"]');
-                        
-                        // await page.waitForNavigation();
-                        await this.sleep('1000');
+                        // await this.sleep('1000');
+                        /*Old code to open message section - Working fine with puppeteer headful*/
 
+                        // this section will open message - new code
+                        await page.evaluate(() => {
+                            return document.querySelectorAll('a[href="/direct/inbox/"]')[0].click();
+                        });
+                        this.sleep('2000');
+                        
+                        //this section check's the instance is on message page
+                        const checkMessages = await page.$x("//span[contains(text(),'Your messages')]")
+                        const checkMessageSection = await page.evaluate(el => el.length, checkMessages)
+                        this.sleep('2000');
+                        if (checkMessageSection === 0) {
+                            return false;
+                        }
+
+                        // this section will return total number of accounts old code
                         const accountCount = await page.$x('//div[@role="listitem"]');
                         const accountCountNumber = await page.evaluate(el => el.length, accountCount);
                         this.sleep('2000');
+                        // this section will return total number of accounts old code
+                        
                         let accountMessages = [];
                         let userMessages = [];
                         
+
+                        /*New code for check*/
+                        const checkValue = await page.$x('/html/body/div[2]/div/div/div[2]/div/div/div/div[1]/div[1]/div[2]/section/div/div/div/div[1]/div/div[1]/div/div[3]/div/div/div/div/div[2]/div');
+                        const parsedHtml = await page.evaluate(el => el, checkValue);
+                        const parsedValues = await page.evaluate((parsedHtml) => {
+                            const checkParsedHtml = parsedHtml[0].querySelectorAll('span');
+                            for(let i = 0; i < checkParsedHtml.length; i++){
+                                if(checkParsedHtml[i].getAttribute('data-visualcompletion') == 'ignore') {
+                                    console.log('found')
+                                }
+                                return checkParsedHtml;
+                            }
+                        }, parsedHtml) 
+                        console.log(parsedValues); return;
+                        /*New code for check*/
+
                         /*New code*/
+                        // await page.waitForXPath('//div[contains(@role,"listitem")]//span[contains(@data-visualcompletion,"ignore")]');
                         const unreadAccounts = await page.$x('//div[contains(@role,"listitem")]//span[contains(@data-visualcompletion,"ignore")]');
                         const unreadAccountMessages = await page.evaluate(el => el.length, unreadAccounts);
                         console.log("unreadAccountMessages", unreadAccountMessages);
-                        for (var i = 0; i < unreadAccountMessages; i++) {
-                            console.log(i);
-                        }
-                        console.log("1111");
-
+                        // for (var i = 0; i < unreadAccountMessages; i++) {
+                        //     console.log(i);
+                        // }
                         return true;
                         /*New code*/
 
                         for (var i = 0; i < accountCountNumber; i++) {
                             
-                            /*let unreadMessage = await page.evaluate((i) => {
+                            let unreadMessage = await page.evaluate((i) => {
                                 return document.querySelectorAll('div[role="listitem"]')[i].outerText//.querySelectorAll('div > div > div')[0].querySelectorAll('div > div > div')[12].querySelectorAll('span').length;
-                            }, i)*/
+                            }, i)
 
-                            
-                            //console.log("UnreadMessage_check", unreadMessage);
+                            console.log("check unread messages", unreadMessage);
+
                             /*if (unreadMessage) {
                                 const getAccountUserName = await page.evaluate((i) => {
                                     return document.querySelectorAll('div[role="listitem"]')[i].innerText.split('\n');
