@@ -32,7 +32,7 @@ class PuppeteerManager {
           this.is_production
             ? // Connect to browserless so we don't run Chrome on the same hardware in production
             puppeteer.connect({ 
-                browserWSEndpoint:'wss://chrome.browserless.io?token=c0ea113f-d72e-4a3b-a3ec-71224200911e&headless=true&--window-size=1280,800&ignoreDefaultArgs=true&stealth',
+                browserWSEndpoint:'wss://chrome.browserless.io?token=c0ea113f-d72e-4a3b-a3ec-71224200911e&headless=true&--window-size=1280,800&ignoreDefaultArgs=true',
                 // browserWSEndpoint: 'wss://chrome.browserless.io?token=c0ea113f-d72e-4a3b-a3ec-71224200911e&headless=false',
                 // slowMo: 1000, 
             })
@@ -84,7 +84,7 @@ class PuppeteerManager {
     async executeCommand(command, page) {
         switch (command.type) {
             case "getFollowers":
-                try {
+                try { // working for both browserless/puppeteer
 
                     /*let followersCount = null;
                     await page.waitForXPath('/html/body/div[2]/div/div/div[2]/div/div/div/div[1]/div[1]/div[2]/div[2]/section/main/div/header/section/ul/li[2]/a/span');
@@ -108,7 +108,7 @@ class PuppeteerManager {
                     console.log("error", error)
                     return false
                 }
-            case "createPost": {
+            case "createPost": { // working for both browserless/puppteer
                 try {
                     
                     // Download temp image before creating a post
@@ -203,21 +203,10 @@ class PuppeteerManager {
                     return false
                 }
             }
-            case "readMessage": {
+            case "readMessage": { // sorted for browserless/puppeteer
                 try {
                     
-                    // check for notification modal and close it
-                    /*await page.waitForXPath('//span[contains(text(),"Turn on notifications")]')
-                    const notificationModal = await page.$x('//span[contains(text(),"Turn on notifications")]');
-                    const isNotificationPopUp = await page.evaluate(el => el.length, notificationModal)
-
-                    if (isNotificationPopUp) {
-                        await page.waitForXPath('//button[contains(text(),"Not Now")]')
-                        const closeNotificationModal = await page.$x('//button[contains(text(),"Not Now")]');
-                        await page.evaluate(el => el.click(), closeNotificationModal[0])
-                    }*/
-
-                    // check for notification modal and close it
+                    // check for notification modal and close it - step 1
                     let notificationModal;
                     if (this.is_production) {
                         notificationModal = await page.$x('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[2]/div/div/div/div/div[2]/div/div/div[2]/span[1]');
@@ -233,7 +222,7 @@ class PuppeteerManager {
                     }
                     this.sleep('2000');
 
-                    // check if any unread message from homepage
+                    // check if any unread message from homepage step 2
                     let unreadAccounts = await page.evaluate(() => {
                         const label = document.querySelectorAll('a[href="/direct/inbox/"]')[0].getAttribute('aria-label');
                         const newLabel = label.split(" ");
@@ -248,71 +237,50 @@ class PuppeteerManager {
                     // proceed for read messages if any
                     if (unreadAccounts > 0) {
                         
-                        /*Old code to open message section - Working fine with puppeteer headful*/
-                        // await page.waitForSelector('a[href="/direct/inbox/"]');
-                        // await page.click('a[href="/direct/inbox/"]');
-                        // await this.sleep('1000');
-                        /*Old code to open message section - Working fine with puppeteer headful*/
-
                         // this section will open message - new code
                         await page.evaluate(() => {
                             return document.querySelectorAll('a[href="/direct/inbox/"]')[0].click();
                         });
-                        this.sleep('2000');
+                        await this.sleep('2000');
                         
-                        //this section check's the instance is on message page
-                        const checkMessages = await page.$x("//span[contains(text(),'Your messages')]")
-                        const checkMessageSection = await page.evaluate(el => el.length, checkMessages)
-                        this.sleep('2000');
-                        if (checkMessageSection === 0) {
-                            return false;
-                        }
-
                         // this section will return total number of accounts old code
                         const accountCount = await page.$x('//div[@role="listitem"]');
                         const accountCountNumber = await page.evaluate(el => el.length, accountCount);
                         this.sleep('2000');
                         // this section will return total number of accounts old code
                         
+                        // code working fine till here
+
                         let accountMessages = [];
                         let userMessages = [];
                         
+                        /*New code - code 1*/
+                        //const unreadAccounts = await page.$x('//div[contains(@role,"list")]');
+                        //const unreadAccountMessages = await page.evaluate(el => el.length, unreadAccounts);
+                        let getAccounts = await page.evaluate(() => {
+                            return document.querySelectorAll('div[role="listitem"]').length;
+                        })
+                        for (var i = 0; i < getAccounts; i++) {
+                            let unreadMessage = await page.evaluate((i) => {
+                                // return document.querySelectorAll('div[role="listitem"]')[i].querySelectorAll('').length;
+                                return document.querySelectorAll('div[role="listitem"]')[i].querySelectorAll('div:nth-child(3)')[2].querySelectorAll('span').length
+                            }, i)
+                            console.log("Get unread messages", unreadMessage);
+                        }
+                        console.log("Length", getAccounts);
+                        /*New code - code 1*/
 
-                        /*New code for check*/
-                        const checkValue = await page.$x('/html/body/div[2]/div/div/div[2]/div/div/div/div[1]/div[1]/div[2]/section/div/div/div/div[1]/div/div[1]/div/div[3]/div/div/div/div/div[2]/div');
-                        const parsedHtml = await page.evaluate(el => el, checkValue);
-                        const parsedValues = await page.evaluate((parsedHtml) => {
-                            const checkParsedHtml = parsedHtml[0].querySelectorAll('span');
-                            for(let i = 0; i < checkParsedHtml.length; i++){
-                                if(checkParsedHtml[i].getAttribute('data-visualcompletion') == 'ignore') {
-                                    console.log('found')
-                                }
-                                return checkParsedHtml;
-                            }
-                        }, parsedHtml) 
-                        console.log(parsedValues); return;
-                        /*New code for check*/
-
-                        /*New code*/
-                        // await page.waitForXPath('//div[contains(@role,"listitem")]//span[contains(@data-visualcompletion,"ignore")]');
-                        const unreadAccounts = await page.$x('//div[contains(@role,"listitem")]//span[contains(@data-visualcompletion,"ignore")]');
-                        const unreadAccountMessages = await page.evaluate(el => el.length, unreadAccounts);
-                        console.log("unreadAccountMessages", unreadAccountMessages);
-                        // for (var i = 0; i < unreadAccountMessages; i++) {
-                        //     console.log(i);
-                        // }
                         return true;
-                        /*New code*/
-
-                        for (var i = 0; i < accountCountNumber; i++) {
+                        //console.log("unreadAccountMessages", unreadAccountMessages);
+                        for (var i = 0; i < unreadMessage; i++) {
                             
                             let unreadMessage = await page.evaluate((i) => {
-                                return document.querySelectorAll('div[role="listitem"]')[i].outerText//.querySelectorAll('div > div > div')[0].querySelectorAll('div > div > div')[12].querySelectorAll('span').length;
+                                return document.querySelectorAll('div[role="listitem"]')[i].querySelectorAll('span[data-visualcompletion = "ignore"]').length;//querySelectorAll('div > div > div')[0].querySelectorAll('div > div > div')[12].querySelectorAll('span').length;
                             }, i)
 
                             console.log("check unread messages", unreadMessage);
 
-                            /*if (unreadMessage) {
+                            if (unreadMessage) {
                                 const getAccountUserName = await page.evaluate((i) => {
                                     return document.querySelectorAll('div[role="listitem"]')[i].innerText.split('\n');
                                 }, i)
@@ -361,7 +329,7 @@ class PuppeteerManager {
                                 await this.sleep('2000')
 
                                 userMessages.push(newMessages);
-                            }*/
+                            }
 
                         }
                         return;    
@@ -378,7 +346,7 @@ class PuppeteerManager {
                     return false;
                 }
             }
-            case "sendMessage": {
+            case "sendMessage": { // sorted for browserless/puppeteer(headful)
                 try {
                     await page.waitForXPath('//div[contains(text(),"Message")]')
                     const messageButton = await page.$x('//div[contains(text(),"Message")]');
@@ -419,15 +387,15 @@ class PuppeteerManager {
                     return false;
                 }
             }
-            case "followProfile": {
+            case "followProfile": { // sorted for browserless/puppeteer
                 try {
-                    await page.waitForXPath('//div[contains(text(),"Follow")]');
+                    // await page.waitForXPath('//div[contains(text(),"Follow")]');
                     const followButton = await page.$x('//div[contains(text(),"Follow")]');
                     const button = await page.evaluate(el => el.textContent, followButton[0]);
                     
                     //Follow                     
                     if (button === "Follow") {
-                        await page.waitForXPath('//div[contains(text(),"Follow")]');
+                        // await page.waitForXPath('//div[contains(text(),"Follow")]');
                         const followButton = await page.$x('//div[contains(text(),"Follow")]');
                         await page.evaluate(el => el.click(), followButton[0]);
 
@@ -453,7 +421,7 @@ class PuppeteerManager {
                     const postToLikePerScroll = Math.ceil(y_postToLike / z_scroll_number);
                     
                     // check for notification modal and close it
-                    await page.waitForXPath('//span[contains(text(),"Turn on notifications")]')
+                    /*await page.waitForXPath('//span[contains(text(),"Turn on notifications")]')
                     const notificationModal = await page.$x('//span[contains(text(),"Turn on notifications")]');
                     const isNotificationPopUp = await page.evaluate(el => el.length, notificationModal)
                     
@@ -461,6 +429,15 @@ class PuppeteerManager {
                         await page.waitForXPath('//button[contains(text(),"Not Now")]')
                         const closeNotificationModal = await page.$x('//button[contains(text(),"Not Now")]');
                         await page.evaluate(el => el.click(), closeNotificationModal[0])
+                    }*/
+
+                    // check for notification modal and close it - step 1
+                    let notificationModal;
+                    if (this.is_production) {
+                        notificationModal = await page.$x('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[2]/div/div/div/div/div[2]/div/div/div[2]/span[1]');
+                    } else {
+                        await page.waitForXPath('//span[contains(text(),"Turn on notifications")]')
+                        notificationModal = await page.$x('//span[contains(text(),"Turn on notifications")]');
                     }
 
                     await this.sleep(1000);
