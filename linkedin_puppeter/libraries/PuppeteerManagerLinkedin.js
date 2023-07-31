@@ -106,16 +106,49 @@ class PuppeteerManagerLinkedin {
                     await page.evaluate(el => el.click(), getWorkPlaceTypeButton[0]);
                     await this.sleep(2000);
 
-                    await page.waitForXPath('//span[text()= "'+this.type+'"]');
-                    const selectedWorkingType = await page.$x('//span[text()= "'+this.type+'"]');
-                    await page.evaluate(el => el.click(), selectedWorkingType[0]);
-                    await this.sleep(2000);
+                    for (const types of this.type) {
+                        await page.waitForXPath('//span[text()= "'+ types +'"]');
+                        const selectedWorkingType = await page.$x('//span[text()= "'+ types +'"]');
+                        await page.evaluate(el => el.click(), selectedWorkingType[0]);
+                        await this.sleep(2000);
+                    }
+                    
+                    /*this.type.forEach((e, k) => {
+                        await page.waitForXPath('//span[text()= "'+ e +'"]');
+                        const selectedWorkingType = await page.$x('//span[text()= "'+ e +'"]');
+                        await page.evaluate(el => el.click(), selectedWorkingType[0]);
+                        await this.sleep(2000);
+                    })
+                    return;*/
 
                     // select type filter result
                     await page.waitForXPath('/html/body/div[5]/div[3]/div[4]/section/div/section/div/div/div/ul/li[7]/div/div/div/div[1]/div/form/fieldset/div[2]/button[2]');
                     const selectTypeResult = await page.$x('/html/body/div[5]/div[3]/div[4]/section/div/section/div/div/div/ul/li[7]/div/div/div/div[1]/div/form/fieldset/div[2]/button[2]');
                     await page.evaluate(el => el.click(), selectTypeResult[0]);
-                    await this.sleep(6000);
+                    await this.sleep(4000);
+
+                    //scrap job data 
+
+                    //get job title
+                    await page.waitForXPath('//div[@data-job-details-events-trigger]//h2[text()]');
+                    const getJobName = await page.$x('//div[@data-job-details-events-trigger]//h2[text()]');
+                    const jobName = await page.evaluate(el => el.innerText, getJobName[0]);
+                    console.log("Job Name: ", jobName);
+
+                    //get work type
+                    await page.waitForXPath('/html/body/div[5]/div[3]/div[4]/div/div/main/div/div[2]/div/div[2]/div[1]/div/div[1]/div/div[1]/div[1]/div[2]');
+                    const getJobDesc = await page.$x('/html/body/div[5]/div[3]/div[4]/div/div/main/div/div[2]/div/div[2]/div[1]/div/div[1]/div/div[1]/div[1]/div[2]');
+                    const jobDesc = await page.evaluate(el => el.innerText, getJobDesc[0]);
+                    const workType = jobDesc.split("·");
+                    console.log("Work Type: ", workType[1]);
+
+                    //get full/part time
+                    await page.waitForXPath('//div[@data-job-details-events-trigger]//ul//li//span');
+                    const getJobType = await page.$x('//div[@data-job-details-events-trigger]//ul//li//span');
+                    const jobType = await page.evaluate(el => el.innerText, getJobType[0]);
+                    console.log("Job Type: ", jobType);
+
+                    this.sleep(4000);
                     
                     this.return = "Data found..!!";
                     return true
