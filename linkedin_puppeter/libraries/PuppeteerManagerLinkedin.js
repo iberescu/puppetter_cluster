@@ -127,26 +127,58 @@ class PuppeteerManagerLinkedin {
                     await page.evaluate(el => el.click(), selectTypeResult[0]);
                     await this.sleep(4000);
 
-                    //scrap job data 
+                    // get total pages 
+                    const totalPageCount = await page.evaluate(() => {
+                        return document.querySelectorAll('.jobs-search-results-list__pagination > ul > li').length;
+                    })
+                    for (var i = 0; i < totalPageCount; i++) {
+                        
+                        //scrap job data 
+                        for (var i = 0; i < 25; i++) {
+                            await page.waitForXPath('//html/body/div[5]/div[3]/div[4]/div/div/main/div/div[1]/div//ul//li[@data-occludable-job-id]//div[@data-view-name]');
+                            const getJobList = await page.$x('//html/body/div[5]/div[3]/div[4]/div/div/main/div/div[1]/div//ul//li[@data-occludable-job-id]//div[@data-view-name]');
+                            const jobList = await page.evaluate(el => el.click(), getJobList[i]);
+                            await this.sleep('4000');
 
-                    //get job title
-                    await page.waitForXPath('//div[@data-job-details-events-trigger]//h2[text()]');
-                    const getJobName = await page.$x('//div[@data-job-details-events-trigger]//h2[text()]');
-                    const jobName = await page.evaluate(el => el.innerText, getJobName[0]);
-                    console.log("Job Name: ", jobName);
+                            // page.$eval('.jobs-search-results-list', (el) => el.scrollIntoView());
+                            const scrollable_section = '.jobs-search-results-list';
 
-                    //get work type
-                    await page.waitForXPath('/html/body/div[5]/div[3]/div[4]/div/div/main/div/div[2]/div/div[2]/div[1]/div/div[1]/div/div[1]/div[1]/div[2]');
-                    const getJobDesc = await page.$x('/html/body/div[5]/div[3]/div[4]/div/div/main/div/div[2]/div/div[2]/div[1]/div/div[1]/div/div[1]/div[1]/div[2]');
-                    const jobDesc = await page.evaluate(el => el.innerText, getJobDesc[0]);
-                    const workType = jobDesc.split("·");
-                    console.log("Work Type: ", workType[1]);
+                            await page.waitForSelector('.jobs-search-results-list');
 
-                    //get full/part time
-                    await page.waitForXPath('//div[@data-job-details-events-trigger]//ul//li//span');
-                    const getJobType = await page.$x('//div[@data-job-details-events-trigger]//ul//li//span');
-                    const jobType = await page.evaluate(el => el.innerText, getJobType[0]);
-                    console.log("Job Type: ", jobType);
+                            await page.evaluate(selector => {
+                              const scrollableSection = document.querySelector(selector);
+
+                              scrollableSection.scrollTop = scrollableSection.offsetHeight;
+                            }, scrollable_section);
+                            /*
+                            //get job title
+                            await page.waitForXPath('//div[@data-job-details-events-trigger]//h2[text()]');
+                            const getJobName = await page.$x('//div[@data-job-details-events-trigger]//h2[text()]');
+                            const jobName = await page.evaluate(el => el.innerText, getJobName[0]);
+                            console.log("Job Name: ", jobName);
+
+                            //get work type
+                            await page.waitForXPath('/html/body/div[5]/div[3]/div[4]/div/div/main/div/div[2]/div/div[2]/div[1]/div/div[1]/div/div[1]/div[1]/div[2]');
+                            const getJobDesc = await page.$x('/html/body/div[5]/div[3]/div[4]/div/div/main/div/div[2]/div/div[2]/div[1]/div/div[1]/div/div[1]/div[1]/div[2]');
+                            const jobDesc = await page.evaluate(el => el.innerText, getJobDesc[0]);
+                            const workType = jobDesc.split("·");
+                            console.log("Work Type: ", workType[1]);
+
+                            //get full/part time
+                            await page.waitForXPath('//div[@data-job-details-events-trigger]//ul//li//span');
+                            const getJobType = await page.$x('//div[@data-job-details-events-trigger]//ul//li//span');
+                            const jobType = await page.evaluate(el => el.innerText, getJobType[0]);
+                            console.log("Job Type: ", jobType);
+                            */
+                        }
+
+                        await page.evaluate((i) => {
+                            document.querySelectorAll('.jobs-search-results-list__pagination > ul > li')[i].querySelector('button').click();
+                            return true;
+                        }, i);
+                        await this.sleep(4000);
+                    }
+                    return true;
 
                     this.sleep(4000);
                     
