@@ -127,56 +127,86 @@ class PuppeteerManagerLinkedin {
                     await page.evaluate(el => el.click(), selectTypeResult[0]);
                     await this.sleep(4000);
 
+                    let jobCount = 1;
+                    let jobs = [];
+                    let jobDetails = [];
                     // get total pages 
                     const totalPageCount = await page.evaluate(() => {
                         return document.querySelectorAll('.jobs-search-results-list__pagination > ul > li').length;
                     })
-                    for (var i = 0; i < totalPageCount; i++) {
+                    for (var i = 2; i < totalPageCount; i++) {
                         
                         //scrap job data 
-                        for (var i = 0; i < 25; i++) {
+                        for (var j = 0; j < 25; j++) {
                             await page.waitForXPath('//html/body/div[5]/div[3]/div[4]/div/div/main/div/div[1]/div//ul//li[@data-occludable-job-id]//div[@data-view-name]');
                             const getJobList = await page.$x('//html/body/div[5]/div[3]/div[4]/div/div/main/div/div[1]/div//ul//li[@data-occludable-job-id]//div[@data-view-name]');
-                            const jobList = await page.evaluate(el => el.click(), getJobList[i]);
+                            const jobList = await page.evaluate(el => el.click(), getJobList[j]);
                             await this.sleep('4000');
 
-                            // page.$eval('.jobs-search-results-list', (el) => el.scrollIntoView());
-                            const scrollable_section = '.jobs-search-results-list';
-
-                            await page.waitForSelector('.jobs-search-results-list');
-
-                            await page.evaluate(selector => {
-                              const scrollableSection = document.querySelector(selector);
-
-                              scrollableSection.scrollTop = scrollableSection.offsetHeight;
-                            }, scrollable_section);
-                            /*
                             //get job title
                             await page.waitForXPath('//div[@data-job-details-events-trigger]//h2[text()]');
                             const getJobName = await page.$x('//div[@data-job-details-events-trigger]//h2[text()]');
                             const jobName = await page.evaluate(el => el.innerText, getJobName[0]);
-                            console.log("Job Name: ", jobName);
+                            jobDetails['job'] = jobName;
+                            // console.log("Job Name: ", jobName);
+                            await this.sleep('2000');
 
                             //get work type
                             await page.waitForXPath('/html/body/div[5]/div[3]/div[4]/div/div/main/div/div[2]/div/div[2]/div[1]/div/div[1]/div/div[1]/div[1]/div[2]');
                             const getJobDesc = await page.$x('/html/body/div[5]/div[3]/div[4]/div/div/main/div/div[2]/div/div[2]/div[1]/div/div[1]/div/div[1]/div[1]/div[2]');
                             const jobDesc = await page.evaluate(el => el.innerText, getJobDesc[0]);
                             const workType = jobDesc.split("·");
-                            console.log("Work Type: ", workType[1]);
+                            jobDetails['wType'] = workType[1];
+                            // console.log("Work Type: ", workType[1]);
+                            await this.sleep('2000');
 
                             //get full/part time
                             await page.waitForXPath('//div[@data-job-details-events-trigger]//ul//li//span');
                             const getJobType = await page.$x('//div[@data-job-details-events-trigger]//ul//li//span');
                             const jobType = await page.evaluate(el => el.innerText, getJobType[0]);
-                            console.log("Job Type: ", jobType);
-                            */
+                            jobDetails['jType'] = jobType;
+                            // console.log("Job Type: ", jobType);
+                            await this.sleep('2000');
+
+                            //get hiring team data
+                            // check selector available or not
+                            const checkHiringTeamSelector = await page.evaluate(() => {
+                                return document.querySelector('div > .hirer-card__hirer-information > a');
+                            });
+
+                            let hiringTeam = "Not available";
+                            if (checkHiringTeamSelector !== null) {
+                                const hiringTeam = await page.evaluate(() => {
+                                    const hiringTeamProfile = document.querySelectorAll('div > .hirer-card__hirer-information > a')[0].getAttribute('href');
+                                    const hirerName = document.querySelectorAll('div > .hirer-card__hirer-information > a > span')[0].outerText
+
+                                    return hirerName + hiringTeamProfile;
+
+                                });
+                            }
+                            jobDetails['hiringTeam'] = hiringTeam;
+                            // console.log("Hiring Team: ", hiringTeam);
+                            await this.sleep('2000');
+                            console.log("Job details", jobDetails);
+                            console.log("Job Count", jobCount);
+
+                            jobs[jobCount] = jobDetails;
+                            
+                            await page.evaluate(() => {
+                                return document.querySelectorAll('.jobs-search-results-list')[0].scrollBy(0, 150);
+                            });
+
+                            jobCount++;
                         }
+                        
+                        console.log("Jobs", jobs);
 
                         await page.evaluate((i) => {
                             document.querySelectorAll('.jobs-search-results-list__pagination > ul > li')[i].querySelector('button').click();
                             return true;
                         }, i);
                         await this.sleep(4000);
+
                     }
                     return true;
 
@@ -200,6 +230,38 @@ class PuppeteerManagerLinkedin {
         await this.runPuppeteer()
         return this.return;
     }
+
+async autoScroll(page, maxScrolls){
+        console.log(maxScrolls);
+    await page.evaluate(async (maxScrolls) => {
+        await new Promise((resolve) => {
+            var totalHeight = 0;
+            var distance = 100;
+            var scrolls = 0;  // scrolls counter
+            var timer = setInterval(() => {
+                // var scrollHeight = document.body.scrollHeight;
+                const scrollHeight = document.querySelectorAll('.jobs-search-results-list')[0].scrollHeight;
+                window.scrollBy(0, distance);
+                totalHeight += distance;
+                scrolls++;  // increment counter
+
+                // stop scrolling if reached the end or the maximum number of scrolls
+                if(totalHeight >= scrollHeight - window.innerHeight || scrolls >= maxScrolls){
+                    return scrollHeight;
+                    clearInterval(timer);
+                    resolve();
+                }
+            }, 100);
+        });
+    }, maxScrolls);  // pass maxScrolls to the function
+}
+
+async scrollDown(page) {
+  await page.$eval('.jobs-search-results-list:last-child', e => {
+    e.scrollIntoView({ behavior: 'smooth', block: 'end', inline: 'end' });
+  });
+}
+
 }
 
 module.exports = { PuppeteerManagerLinkedin }
