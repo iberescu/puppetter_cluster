@@ -134,14 +134,25 @@ class PuppeteerManagerLinkedin {
                     const totalPageCount = await page.evaluate(() => {
                         return document.querySelectorAll('.jobs-search-results-list__pagination > ul > li').length;
                     })
-                    for (var i = 2; i < totalPageCount; i++) {
+                    // console.log(totalPageCount); 
+                    // return;
+                    for (var i = 2; i <= totalPageCount; i++) {
+
+                        const searchResultCount = await page.evaluate(() => {
+                            return document.querySelectorAll('.jobs-search-results-list > ul > li').length;
+                        });
                         
                         //scrap job data 
-                        for (var j = 0; j < 25; j++) {
-                            await page.waitForXPath('//html/body/div[5]/div[3]/div[4]/div/div/main/div/div[1]/div//ul//li[@data-occludable-job-id]//div[@data-view-name]');
+                        for (var j = 0; j < searchResultCount; j++) {
+                            /*await page.waitForXPath('//html/body/div[5]/div[3]/div[4]/div/div/main/div/div[1]/div//ul//li[@data-occludable-job-id]//div[@data-view-name]');
                             const getJobList = await page.$x('//html/body/div[5]/div[3]/div[4]/div/div/main/div/div[1]/div//ul//li[@data-occludable-job-id]//div[@data-view-name]');
                             const jobList = await page.evaluate(el => el.click(), getJobList[j]);
-                            await this.sleep('4000');
+                            await this.sleep('1000');*/
+                            
+                            await page.evaluate((j) => {
+                                document.querySelectorAll('.jobs-search-results-list > ul > li')[j].querySelector('div > div > div > a').click();
+                            }, j);
+                            await this.sleep(2000);
 
                             //get job title
                             await page.waitForXPath('//div[@data-job-details-events-trigger]//h2[text()]');
@@ -188,18 +199,23 @@ class PuppeteerManagerLinkedin {
                             // console.log("Hiring Team: ", hiringTeam);
                             await this.sleep('2000');
                             console.log("Job details", jobDetails);
-                            console.log("Job Count", jobCount);
+                            // console.log("Job Count", jobCount);
 
-                            jobs[jobCount] = jobDetails;
                             
                             await page.evaluate(() => {
                                 return document.querySelectorAll('.jobs-search-results-list')[0].scrollBy(0, 150);
                             });
 
+                            jobs[jobCount] = jobDetails;
+
                             jobCount++;
+
                         }
                         
-                        console.log("Jobs", jobs);
+                        // send data to API
+                        const postData = JSON.stringify(jobs);
+                        await this.sendData(postData);
+                        
 
                         await page.evaluate((i) => {
                             document.querySelectorAll('.jobs-search-results-list__pagination > ul > li')[i].querySelector('button').click();
@@ -208,6 +224,7 @@ class PuppeteerManagerLinkedin {
                         await this.sleep(4000);
 
                     }
+                    console.log("Jobs", jobs);
                     return true;
 
                     this.sleep(4000);
@@ -231,36 +248,26 @@ class PuppeteerManagerLinkedin {
         return this.return;
     }
 
-async autoScroll(page, maxScrolls){
-        console.log(maxScrolls);
-    await page.evaluate(async (maxScrolls) => {
-        await new Promise((resolve) => {
-            var totalHeight = 0;
-            var distance = 100;
-            var scrolls = 0;  // scrolls counter
-            var timer = setInterval(() => {
-                // var scrollHeight = document.body.scrollHeight;
-                const scrollHeight = document.querySelectorAll('.jobs-search-results-list')[0].scrollHeight;
-                window.scrollBy(0, distance);
-                totalHeight += distance;
-                scrolls++;  // increment counter
+    async sendData(postData) {
+        
+        console.log("Post Data", postData);
+        const options = {
+            hostname: 'https://www.remwork.io/api/crawljobs',
+            path: '/api/crawljobs',
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json', // Set the appropriate Content-Type header
+                'Content-Length': postData.length
+            }
+        }; 
 
-                // stop scrolling if reached the end or the maximum number of scrolls
-                if(totalHeight >= scrollHeight - window.innerHeight || scrolls >= maxScrolls){
-                    return scrollHeight;
-                    clearInterval(timer);
-                    resolve();
-                }
-            }, 100);
-        });
-    }, maxScrolls);  // pass maxScrolls to the function
-}
+        const req = client.request(options); 
 
-async scrollDown(page) {
-  await page.$eval('.jobs-search-results-list:last-child', e => {
-    e.scrollIntoView({ behavior: 'smooth', block: 'end', inline: 'end' });
-  });
-}
+        req.write(postData);
+
+        // End the request
+        req.end(); 
+    }
 
 }
 
