@@ -127,23 +127,26 @@ class PuppeteerManagerLinkedin {
                     await page.evaluate(el => el.click(), selectTypeResult[0]);
                     await this.sleep(4000);
 
-                    let jobCount = 1;
-                    let jobs = [];
-                    let jobDetails = [];
+                    const searchResultCount = await page.evaluate(() => {
+                        return document.querySelectorAll('.jobs-search-results-list > ul > li').length;
+                    });
+
+                    
+                    
                     // get total pages 
                     const totalPageCount = await page.evaluate(() => {
                         return document.querySelectorAll('.jobs-search-results-list__pagination > ul > li').length;
                     })
-                    // console.log(totalPageCount); 
-                    // return;
+
                     for (var i = 2; i <= totalPageCount; i++) {
 
+                        let jobs = [];
                         const searchResultCount = await page.evaluate(() => {
                             return document.querySelectorAll('.jobs-search-results-list > ul > li').length;
                         });
-                        
                         //scrap job data 
                         for (var j = 0; j < searchResultCount; j++) {
+                            let jobDetails = {};
                             /*await page.waitForXPath('//html/body/div[5]/div[3]/div[4]/div/div/main/div/div[1]/div//ul//li[@data-occludable-job-id]//div[@data-view-name]');
                             const getJobList = await page.$x('//html/body/div[5]/div[3]/div[4]/div/div/main/div/div[1]/div//ul//li[@data-occludable-job-id]//div[@data-view-name]');
                             const jobList = await page.evaluate(el => el.click(), getJobList[j]);
@@ -158,7 +161,8 @@ class PuppeteerManagerLinkedin {
                             await page.waitForXPath('//div[@data-job-details-events-trigger]//h2[text()]');
                             const getJobName = await page.$x('//div[@data-job-details-events-trigger]//h2[text()]');
                             const jobName = await page.evaluate(el => el.innerText, getJobName[0]);
-                            jobDetails['job'] = jobName;
+                            // jobDetails['job'] = jobName;
+                            jobDetails.job = jobName;
                             // console.log("Job Name: ", jobName);
                             await this.sleep('2000');
 
@@ -167,7 +171,8 @@ class PuppeteerManagerLinkedin {
                             const getJobDesc = await page.$x('/html/body/div[5]/div[3]/div[4]/div/div/main/div/div[2]/div/div[2]/div[1]/div/div[1]/div/div[1]/div[1]/div[2]');
                             const jobDesc = await page.evaluate(el => el.innerText, getJobDesc[0]);
                             const workType = jobDesc.split("·");
-                            jobDetails['wType'] = workType[1];
+                            // jobDetails['wType'] = workType[1];
+                            // jobDetails.wType = workType[1];
                             // console.log("Work Type: ", workType[1]);
                             await this.sleep('2000');
 
@@ -175,8 +180,12 @@ class PuppeteerManagerLinkedin {
                             await page.waitForXPath('//div[@data-job-details-events-trigger]//ul//li//span');
                             const getJobType = await page.$x('//div[@data-job-details-events-trigger]//ul//li//span');
                             const jobType = await page.evaluate(el => el.innerText, getJobType[0]);
-                            jobDetails['jType'] = jobType;
+                            // jobDetails['jType'] = jobType;
+                            // jobDetails.jType = jobType;
                             // console.log("Job Type: ", jobType);
+
+                            jobDetails.type = workType[1] + "-" + jobType; 
+
                             await this.sleep('2000');
 
                             //get hiring team data
@@ -195,26 +204,25 @@ class PuppeteerManagerLinkedin {
 
                                 });
                             }
-                            jobDetails['hiringTeam'] = hiringTeam;
-                            // console.log("Hiring Team: ", hiringTeam);
-                            await this.sleep('2000');
-                            console.log("Job details", jobDetails);
-                            // console.log("Job Count", jobCount);
+                            
+                            // jobDetails['hiringTeam'] = hiringTeam;
+                            jobDetails.hiringTeam = hiringTeam;
 
+                            await this.sleep('2000');
                             
                             await page.evaluate(() => {
                                 return document.querySelectorAll('.jobs-search-results-list')[0].scrollBy(0, 150);
                             });
 
-                            jobs[jobCount] = jobDetails;
-
-                            jobCount++;
+                            jobs.push(jobDetails);
 
                         }
-                        
+                        console.log("Jobs", jobs);
+                        // console.log("Jobs", postData)
+
                         // send data to API
-                        const postData = JSON.stringify(jobs);
-                        await this.sendData(postData);
+                        const postData = jobs;
+                        // await this.sendData(postData);
                         
 
                         await page.evaluate((i) => {
