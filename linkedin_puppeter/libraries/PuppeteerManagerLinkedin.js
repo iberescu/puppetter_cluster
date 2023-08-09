@@ -1,5 +1,6 @@
 const fs = require('fs');
-const client = require('https');
+
+
 
 class PuppeteerManagerLinkedin {
     constructor(args) {
@@ -10,6 +11,7 @@ class PuppeteerManagerLinkedin {
         this.type = args.type;
         this.date_posted = args.date_posted;
         this.return = '';
+        this.postData = {};
     }
 
     async runPuppeteer() {
@@ -211,20 +213,40 @@ class PuppeteerManagerLinkedin {
 
 
                             // get job location
-                            jobDetails.location = "";
+                            jobDetails.location = this.location;
+
+                            // hiring team job profile in company
+                            const job_title = await page.evaluate(() => {
+                                return document.querySelector('div > .hirer-card__hirer-information  > .linked-area > .hirer-card__hirer-job-title').innerText;
+                            })
+                            jobDetails.job_title = job_title;
 
                             //get job title
                             await page.waitForXPath('//div[@data-job-details-events-trigger]//h2[text()]');
                             const getJobName = await page.$x('//div[@data-job-details-events-trigger]//h2[text()]');
                             const jobName = await page.evaluate(el => el.innerText, getJobName[0]);
-                            jobDetails.job_title = jobName;
+                            jobDetails.hr_job_title = jobName;
+                            await this.sleep('2000');
+
+                            // get job linkedin url
+                            await page.waitForXPath('//div[@data-job-details-events-trigger]//a[@href]');
+                            const getJobUrl = await page.$x('//div[@data-job-details-events-trigger]//a[@href]');
+                            const hr_job_linkedin_url = await page.evaluate(el => el.href, getJobUrl[0]);
+                            jobDetails.hr_job_linkedin_url = hr_job_linkedin_url;
+                            await this.sleep('2000');
+
+                            // code for company and country details
+                            await page.waitForXPath('/html/body/div[5]/div[3]/div[4]/div/div/main/div/div[2]/div/div[2]/div[1]/div/div[1]/div/div[1]/div[1]/div[2]');
+                            const getJobDesc = await page.$x('/html/body/div[5]/div[3]/div[4]/div/div/main/div/div[2]/div/div[2]/div[1]/div/div[1]/div/div[1]/div[1]/div[2]');
+                            const jobDesc = await page.evaluate(el => el.innerText, getJobDesc[0]);
+                            const jobCompanyCountry = jobDesc.split("·");
                             await this.sleep('2000');
 
                             // get country
-                            jobDetails.country = "";
+                            jobDetails.country = jobCompanyCountry[1];
 
                             // get company
-                            jobDetails.company = "";
+                            jobDetails.company = jobCompanyCountry[0];
 
                             // get contact phone
                             jobDetails.phone = "";
@@ -236,7 +258,7 @@ class PuppeteerManagerLinkedin {
                             jobDetails.country_code_prefix = "";
 
                             // get contact emails
-                            jobDetails.emails = ["test@test.com"]; 
+                            jobDetails.emails = []; 
 
                             // //get work type
                             // await page.waitForXPath('/html/body/div[5]/div[3]/div[4]/div/div/main/div/div[2]/div/div[2]/div[1]/div/div[1]/div/div[1]/div[1]/div[2]');
@@ -273,7 +295,7 @@ class PuppeteerManagerLinkedin {
                             // }
                             
                             // jobDetails['hiringTeam'] = hiringTeam;
-                                jobDetails.hiringTeam = hiringTeam;
+                                // jobDetails.hiringTeam = hiringTeam;
                                 await this.sleep('2000');
                                 jobs.push(jobDetails);
                             }
@@ -287,13 +309,17 @@ class PuppeteerManagerLinkedin {
                         // console.log(jobDetails);    
 
                         }
-                        console.log("Jobs", jobs);
+                        // console.log("Jobs", jobs);
                         // console.log("Jobs", postData)
 
                         // send data to API
-                        const postData = jobs;
+                        // const postData = jobs;
                         // await this.sendData(postData);
-                        
+                        this.postData.user_id = 21;
+                        this.postData.data = jobs;
+
+                        await this.sendData(this.postData);
+                        // console.log("Post Data", this.postData);
 
                         await page.evaluate((i) => {
                             document.querySelectorAll('.jobs-search-results-list__pagination > ul > li')[i].querySelector('button').click();
@@ -326,25 +352,71 @@ class PuppeteerManagerLinkedin {
         return this.return;
     }
 
-    async sendData(postData) {
+    async sendData(getData) {
         
-        console.log("Post Data", postData);
+        console.log("Post Data", getData);
+        const data = JSON.stringify(getData);
+        const client = require('https');
         const options = {
-            hostname: 'https://www.remwork.io/api/crawljobs',
+            hostname: 'testapp.leadmaker.io',
+            port: 443,
             path: '/api/crawljobs',
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json', // Set the appropriate Content-Type header
-                'Content-Length': postData.length
             }
         }; 
 
         const req = client.request(options); 
 
-        req.write(postData);
+        req.write(data);
 
         // End the request
-        req.end(); 
+        req.end();
+
+
+            /*const options = {method: 'HEAD', host: 'https://app.leadmaker.io/api/crawljobs', port: 80, path: '/'},
+            req = client.request(options, function(r) {
+                console.log(JSON.stringify(r.headers));
+            });
+            req.end(); */
+    }
+
+    async sendPostData(getData){
+        /*const request = require('request');
+        const options = {
+          'method': 'POST',
+          'url': 'https://testapp.leadmaker.io/api/crawljobs',
+          'headers': {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(data)
+
+        };
+        request(options, function (error, response) {
+          if (error) throw new Error(error);
+          console.log(response.body);
+        });*/
+
+        const axios = require('axios');
+        const data = JSON.stringify(getData);
+
+        const config = {
+          method: 'post',
+          url: 'https://testapp.leadmaker.io/api/crawljobs',
+          headers: { 
+            'Content-Type': 'application/json'
+          },
+          data : data
+        };
+
+        axios(config)
+        .then(function (response) {
+          console.log(JSON.stringify(response.data));
+        })
+        .catch(function (error) {
+          console.log(error);
+        });
     }
 
 }
