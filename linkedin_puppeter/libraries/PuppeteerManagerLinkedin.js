@@ -1,7 +1,5 @@
 const fs = require('fs');
 
-
-
 class PuppeteerManagerLinkedin {
     constructor(args) {
         this.url = args.url;
@@ -12,6 +10,7 @@ class PuppeteerManagerLinkedin {
         this.date_posted = args.date_posted;
         this.return = '';
         this.postData = {};
+        this.dataSent = false;
     }
 
     async runPuppeteer() {
@@ -115,14 +114,6 @@ class PuppeteerManagerLinkedin {
                         await this.sleep(2000);
                     }
                     
-                    /*this.type.forEach((e, k) => {
-                        await page.waitForXPath('//span[text()= "'+ e +'"]');
-                        const selectedWorkingType = await page.$x('//span[text()= "'+ e +'"]');
-                        await page.evaluate(el => el.click(), selectedWorkingType[0]);
-                        await this.sleep(2000);
-                    })
-                    return;*/
-
                     // select type filter result
                     await page.waitForXPath('/html/body/div[5]/div[3]/div[4]/section/div/section/div/div/div/ul/li[7]/div/div/div/div[1]/div/form/fieldset/div[2]/button[2]');
                     const selectTypeResult = await page.$x('/html/body/div[5]/div[3]/div[4]/section/div/section/div/div/div/ul/li[7]/div/div/div/div[1]/div/form/fieldset/div[2]/button[2]');
@@ -148,178 +139,147 @@ class PuppeteerManagerLinkedin {
                         });
                         //scrap job data 
                         for (var j = 0; j < searchResultCount; j++) {
-                            
-                            /*await page.waitForXPath('//html/body/div[5]/div[3]/div[4]/div/div/main/div/div[1]/div//ul//li[@data-occludable-job-id]//div[@data-view-name]');
-                            const getJobList = await page.$x('//html/body/div[5]/div[3]/div[4]/div/div/main/div/div[1]/div//ul//li[@data-occludable-job-id]//div[@data-view-name]');
-                            const jobList = await page.evaluate(el => el.click(), getJobList[j]);
-                            await this.sleep('1000');*/
+                                
+                            try{
+                                    //get data from each job listed 
+                                const job_details = await page.evaluate((j) => {
+                                    document.querySelectorAll('.jobs-search-results-list > ul > li')[j].querySelector('div > div > div > a').click();
+                                }, j);
+                                await this.sleep(1000);
 
-                            //get data from each job listed 
-                            await page.evaluate((j) => {
-                                document.querySelectorAll('.jobs-search-results-list > ul > li')[j].querySelector('div > div > div > a').click();
-                            }, j);
-
-                            // check if hiring team available or not
-                            await this.sleep(2000);
-                            const checkHiringTeam = await page.evaluate(() => {
-                                return document.querySelector('div > .hirer-card__hirer-information > a');
-                            });
-
-                            if (checkHiringTeam !== null) {
-                            let jobDetails = {};
-
-                                const hiringTeam = await page.evaluate(() => {
-                                    const hiringTeamProfile = document.querySelectorAll('div > .hirer-card__hirer-information > a')[0].getAttribute('href');
-                                    const hirerName = document.querySelectorAll('div > .hirer-card__hirer-information > a > span')[0].outerText
-
-                                    return hirerName + hiringTeamProfile;
-
+                                // check if hiring team available or not
+                                const checkHiringTeam = await page.evaluate(() => {
+                                    return document.querySelector('div > .hirer-card__hirer-information > a');
                                 });
+                                await this.sleep(1000);
 
-                            // get contact first name
-                            const firstName = await page.evaluate(() => {
-                                const name = document.querySelector('div > .hirer-card__hirer-information > a > span').innerText;
-                                const splitNameData = name.split(",");
-                                const getFullName = splitNameData[0];
+                                if (checkHiringTeam !== null) {
+                                    this.dataSent = true;
+                                    let jobDetails = {};
 
-                                const getName = getFullName.split(" ");
-                                const firstName = getName[0];
+                                    /*const hiringTeam = await page.evaluate(() => {
+                                        const hiringTeamProfile = document.querySelectorAll('div > .hirer-card__hirer-information > a')[0].getAttribute('href');
+                                        const hirerName = document.querySelectorAll('div > .hirer-card__hirer-information > a > span')[0].outerText
 
-                                return firstName;
-                            })
-                            jobDetails.firstname = firstName;
-                            
-                            // get contact last name
-                            const lastName = await page.evaluate(() => {
-                                const name = document.querySelector('div > .hirer-card__hirer-information > a > span').innerText;
-                                const splitNameData = name.split(",");
-                                const getFullName = splitNameData[0];
+                                        return hirerName + hiringTeamProfile;
 
-                                const getName = getFullName.split(" ");
-                                const lastName = getName[1];
+                                    });*/
 
-                                return lastName;
-                            })
-                            jobDetails.lastname = lastName;
+                                    // get contact first name
+                                    const firstName = await page.evaluate(() => {
+                                        const name = document.querySelector('div > .hirer-card__hirer-information > a > span').innerText;
+                                        const splitNameData = name.split(",");
+                                        const getFullName = splitNameData[0];
 
-                            //get contact linkedin url
-                            const contactUrl = await page.evaluate(() => {
-                                return document.querySelectorAll('div > .hirer-card__hirer-information > a')[0].href;
-                            })
-                            jobDetails.linkedin_url = contactUrl;
+                                        const getName = getFullName.split(" ");
+                                        const firstName = getName[0];
 
-                            // get industry
-                            jobDetails.industry = "";
+                                        return firstName;
+                                    })
+                                    jobDetails.firstname = firstName;
+                                    // await this.sleep(1000);
+
+                                    // get contact last name
+                                    const lastName = await page.evaluate(() => {
+                                        const name = document.querySelector('div > .hirer-card__hirer-information > a > span').innerText;
+                                        const splitNameData = name.split(",");
+                                        const getFullName = splitNameData[0];
+
+                                        const getName = getFullName.split(" ");
+                                        const lastName = getName[1];
+
+                                        return lastName;
+                                    })
+                                    jobDetails.lastname = lastName;
+                                    // await this.sleep(1000);
+
+                                    //get contact linkedin url
+                                    const contactUrl = await page.evaluate(() => {
+                                        return document.querySelectorAll('div > .hirer-card__hirer-information > a')[0].href;
+                                    })
+                                    jobDetails.linkedin_url = contactUrl;
+                                    // await this.sleep(1000);
+
+                                    // get industry
+                                    jobDetails.industry = "";
 
 
-                            // get job location
-                            jobDetails.location = this.location;
+                                    // get job location
+                                    jobDetails.location = this.location;
 
-                            // hiring team job profile in company
-                            const job_title = await page.evaluate(() => {
-                                return document.querySelector('div > .hirer-card__hirer-information  > .linked-area > .hirer-card__hirer-job-title').innerText;
-                            })
-                            jobDetails.job_title = job_title;
+                                    // hiring team job profile in company
+                                    const job_title = await page.evaluate(() => {
+                                        return document.querySelector('div > .hirer-card__hirer-information  > .linked-area > .hirer-card__hirer-job-title').innerText;
+                                    })
+                                    jobDetails.job_title = job_title;
+                                    // await this.sleep(1000);
 
-                            //get job title
-                            await page.waitForXPath('//div[@data-job-details-events-trigger]//h2[text()]');
-                            const getJobName = await page.$x('//div[@data-job-details-events-trigger]//h2[text()]');
-                            const jobName = await page.evaluate(el => el.innerText, getJobName[0]);
-                            jobDetails.hr_job_title = jobName;
-                            await this.sleep('2000');
+                                    //get job title
+                                    await page.waitForXPath('//div[@data-job-details-events-trigger]//h2[text()]');
+                                    const getJobName = await page.$x('//div[@data-job-details-events-trigger]//h2[text()]');
+                                    const jobName = await page.evaluate(el => el.innerText, getJobName[0]);
+                                    jobDetails.hr_job_title = jobName;
+                                    // await this.sleep(1000);
 
-                            // get job linkedin url
-                            await page.waitForXPath('//div[@data-job-details-events-trigger]//a[@href]');
-                            const getJobUrl = await page.$x('//div[@data-job-details-events-trigger]//a[@href]');
-                            const hr_job_linkedin_url = await page.evaluate(el => el.href, getJobUrl[0]);
-                            jobDetails.hr_job_linkedin_url = hr_job_linkedin_url;
-                            await this.sleep('2000');
+                                    // get job linkedin url
+                                    await page.waitForXPath('//div[@data-job-details-events-trigger]//a[@href]');
+                                    const getJobUrl = await page.$x('//div[@data-job-details-events-trigger]//a[@href]');
+                                    const hr_job_linkedin_url = await page.evaluate(el => el.href, getJobUrl[0]);
+                                    jobDetails.hr_job_linkedin_url = hr_job_linkedin_url;
+                                    // await this.sleep(1000);
 
-                            // code for company and country details
-                            await page.waitForXPath('/html/body/div[5]/div[3]/div[4]/div/div/main/div/div[2]/div/div[2]/div[1]/div/div[1]/div/div[1]/div[1]/div[2]');
-                            const getJobDesc = await page.$x('/html/body/div[5]/div[3]/div[4]/div/div/main/div/div[2]/div/div[2]/div[1]/div/div[1]/div/div[1]/div[1]/div[2]');
-                            const jobDesc = await page.evaluate(el => el.innerText, getJobDesc[0]);
-                            const jobCompanyCountry = jobDesc.split("·");
-                            await this.sleep('2000');
+                                    // code for company and country details
+                                    await page.waitForXPath('/html/body/div[5]/div[3]/div[4]/div/div/main/div/div[2]/div/div[2]/div[1]/div/div[1]/div/div[1]/div[1]/div[2]');
+                                    const getJobDesc = await page.$x('/html/body/div[5]/div[3]/div[4]/div/div/main/div/div[2]/div/div[2]/div[1]/div/div[1]/div/div[1]/div[1]/div[2]');
+                                    const jobDesc = await page.evaluate(el => el.innerText, getJobDesc[0]);
+                                    const jobCompanyCountry = jobDesc.split("·");
+                                    // await this.sleep(1000);
 
-                            // get country
-                            jobDetails.country = jobCompanyCountry[1];
+                                    // get country
+                                    jobDetails.country = jobCompanyCountry[1];
 
-                            // get company
-                            jobDetails.company = jobCompanyCountry[0];
+                                    // get company
+                                    jobDetails.company = jobCompanyCountry[0];
 
-                            // get contact phone
-                            jobDetails.phone = "";
+                                    // get contact phone
+                                    jobDetails.phone = "";
 
-                            // get phone country code
-                            jobDetails.country_code = "";
+                                    // get phone country code
+                                    jobDetails.country_code = "";
 
-                            // get country code prefix
-                            jobDetails.country_code_prefix = "";
+                                    // get country code prefix
+                                    jobDetails.country_code_prefix = "";
 
-                            // get contact emails
-                            jobDetails.emails = []; 
+                                    // get contact emails
+                                    jobDetails.emails = []; 
 
-                            // //get work type
-                            // await page.waitForXPath('/html/body/div[5]/div[3]/div[4]/div/div/main/div/div[2]/div/div[2]/div[1]/div/div[1]/div/div[1]/div[1]/div[2]');
-                            // const getJobDesc = await page.$x('/html/body/div[5]/div[3]/div[4]/div/div/main/div/div[2]/div/div[2]/div[1]/div/div[1]/div/div[1]/div[1]/div[2]');
-                            // const jobDesc = await page.evaluate(el => el.innerText, getJobDesc[0]);
-                            // const workType = jobDesc.split("·");
-                            // // jobDetails.wType = workType[1];
-                            // await this.sleep('2000');
-
-                            //get full/part time
-                            // await page.waitForXPath('//div[@data-job-details-events-trigger]//ul//li//span');
-                            // const getJobType = await page.$x('//div[@data-job-details-events-trigger]//ul//li//span');
-                            // const jobType = await page.evaluate(el => el.innerText, getJobType[0]);
-                            // // jobDetails.jType = jobType;
-                            
-                            // jobDetails.type = workType[1] + "-" + jobType; 
-                            await this.sleep('2000');
-
-                            //get hiring team data
-                            // check selector available or not
-                            const checkHiringTeamSelector = await page.evaluate(() => {
-                                return document.querySelector('div > .hirer-card__hirer-information > a');
-                            });
-
-                            // let hiringTeam = "Not available";
-                            // if (checkHiringTeamSelector !== null) {
-                            //     const hiringTeam = await page.evaluate(() => {
-                            //         const hiringTeamProfile = document.querySelectorAll('div > .hirer-card__hirer-information > a')[0].getAttribute('href');
-                            //         const hirerName = document.querySelectorAll('div > .hirer-card__hirer-information > a > span')[0].outerText
-
-                            //         return hirerName + hiringTeamProfile;
-
-                            //     });
-                            // }
-                            
-                            // jobDetails['hiringTeam'] = hiringTeam;
-                                // jobDetails.hiringTeam = hiringTeam;
-                                await this.sleep('2000');
-                                jobs.push(jobDetails);
+                                    // get job details added
+                                    jobs.push(jobDetails);
+                                    // await this.sleep(1000);
+                                } else {
+                                    this.dataSent = false;
+                                }
+                                
+                                
+                                await page.evaluate(() => {
+                                    return document.querySelectorAll('.jobs-search-results-list')[0].scrollBy(0, 150);
+                                });
+                                await this.sleep(1000);
+                            } catch(err) {
+                                console.log(err);
                             }
-                            
-                            
-                            await page.evaluate(() => {
-                                return document.querySelectorAll('.jobs-search-results-list')[0].scrollBy(0, 150);
-                            });
-
-
-                        // console.log(jobDetails);    
-
                         }
-                        // console.log("Jobs", jobs);
-                        // console.log("Jobs", postData)
-
+                        
                         // send data to API
-                        // const postData = jobs;
-                        // await this.sendData(postData);
-                        this.postData.user_id = 21;
-                        this.postData.data = jobs;
-
-                        await this.sendData(this.postData);
-                        // console.log("Post Data", this.postData);
+                        if (this.dataSent) {
+                            this.postData.user_id = 21;
+                            this.postData.data = jobs;
+                            // console.log(this.postData);
+                            await this.sendData(this.postData);
+                        } else {
+                            console.log("No hiring team found");
+                        }
+                        
 
                         await page.evaluate((i) => {
                             document.querySelectorAll('.jobs-search-results-list__pagination > ul > li')[i].querySelector('button').click();
@@ -328,11 +288,9 @@ class PuppeteerManagerLinkedin {
                         await this.sleep(4000);
 
                     }
-                    console.log("Jobs", jobs);
-                    return true;
-
-                    this.sleep(4000);
                     
+                    return true;
+                    this.sleep(4000);
                     this.return = "Data found..!!";
                     return true
                 } catch (error) {
@@ -352,10 +310,14 @@ class PuppeteerManagerLinkedin {
         return this.return;
     }
 
-    async sendData(getData) {
+    /**
+     * send data to end point
+     * @param json
+     */  
+    async sendData(postData) {
         
-        console.log("Post Data", getData);
-        const data = JSON.stringify(getData);
+        const data = JSON.stringify(postData);
+        console.log("Post Data", data);
         const client = require('https');
         const options = {
             hostname: 'testapp.leadmaker.io',
@@ -374,51 +336,7 @@ class PuppeteerManagerLinkedin {
         // End the request
         req.end();
 
-
-            /*const options = {method: 'HEAD', host: 'https://app.leadmaker.io/api/crawljobs', port: 80, path: '/'},
-            req = client.request(options, function(r) {
-                console.log(JSON.stringify(r.headers));
-            });
-            req.end(); */
     }
-
-    async sendPostData(getData){
-        /*const request = require('request');
-        const options = {
-          'method': 'POST',
-          'url': 'https://testapp.leadmaker.io/api/crawljobs',
-          'headers': {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(data)
-
-        };
-        request(options, function (error, response) {
-          if (error) throw new Error(error);
-          console.log(response.body);
-        });*/
-
-        const axios = require('axios');
-        const data = JSON.stringify(getData);
-
-        const config = {
-          method: 'post',
-          url: 'https://testapp.leadmaker.io/api/crawljobs',
-          headers: { 
-            'Content-Type': 'application/json'
-          },
-          data : data
-        };
-
-        axios(config)
-        .then(function (response) {
-          console.log(JSON.stringify(response.data));
-        })
-        .catch(function (error) {
-          console.log(error);
-        });
-    }
-
 }
 
 module.exports = { PuppeteerManagerLinkedin }
