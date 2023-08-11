@@ -10,7 +10,6 @@ class PuppeteerManagerLinkedin {
         this.date_posted = args.date_posted;
         this.return = '';
         this.postData = {};
-        this.dataSent = false;
     }
 
     async runPuppeteer() {
@@ -141,7 +140,7 @@ class PuppeteerManagerLinkedin {
                         for (var j = 0; j < searchResultCount; j++) {
                                 
                             try{
-                                    //get data from each job listed 
+                                //get data from each job listed 
                                 const job_details = await page.evaluate((j) => {
                                     document.querySelectorAll('.jobs-search-results-list > ul > li')[j].querySelector('div > div > div > a').click();
                                 }, j);
@@ -255,12 +254,10 @@ class PuppeteerManagerLinkedin {
 
                                     // get job details added
                                     jobs.push(jobDetails);
+                                    // console.log("Jobs", jobs);
                                     // await this.sleep(1000);
-                                } else {
-                                    this.dataSent = false;
                                 }
-                                
-                                
+                                // scroll down to pagination button
                                 await page.evaluate(() => {
                                     return document.querySelectorAll('.jobs-search-results-list')[0].scrollBy(0, 150);
                                 });
@@ -270,16 +267,16 @@ class PuppeteerManagerLinkedin {
                             }
                         }
                         
-                        // send data to API
-                        if (this.dataSent) {
+                        // send data to API if job details are available
+                        if (jobs.length > 0) {
+                            fs.appendFileSync('./data.txt', JSON.stringify(jobs, null, 2));
                             this.postData.user_id = 21;
                             this.postData.data = jobs;
                             // console.log(this.postData);
                             await this.sendData(this.postData);
                         } else {
-                            console.log("No hiring team found");
+                            console.log("No job data");
                         }
-                        
 
                         await page.evaluate((i) => {
                             document.querySelectorAll('.jobs-search-results-list__pagination > ul > li')[i].querySelector('button').click();
