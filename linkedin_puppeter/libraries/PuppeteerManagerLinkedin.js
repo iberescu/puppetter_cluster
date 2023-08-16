@@ -123,8 +123,6 @@ class PuppeteerManagerLinkedin {
                         return document.querySelectorAll('.jobs-search-results-list > ul > li').length;
                     });
 
-                    
-                    
                     // get total pages 
                     const totalPageCount = await page.evaluate(() => {
                         return document.querySelectorAll('.jobs-search-results-list__pagination > ul > li').length;
@@ -254,7 +252,6 @@ class PuppeteerManagerLinkedin {
 
                                     // get job details added
                                     jobs.push(jobDetails);
-                                    // console.log("Jobs", jobs);
                                     // await this.sleep(1000);
                                 }
                                 // scroll down to pagination button
@@ -272,8 +269,8 @@ class PuppeteerManagerLinkedin {
                             fs.appendFileSync('./data.txt', JSON.stringify(jobs, null, 2));
                             this.postData.user_id = 21;
                             this.postData.data = jobs;
-                            // console.log(this.postData);
                             await this.sendData(this.postData);
+                            // console.log(this.postData);
                         } else {
                             console.log("No job data");
                         }
@@ -313,9 +310,9 @@ class PuppeteerManagerLinkedin {
      */  
     async sendData(postData) {
         
+        console.log("Post Data", postData);
         const data = JSON.stringify(postData);
-        console.log("Post Data", data);
-        const client = require('https');
+        const https = require('https');
         const options = {
             hostname: 'testapp.leadmaker.io',
             port: 443,
@@ -326,9 +323,25 @@ class PuppeteerManagerLinkedin {
             }
         }; 
 
-        const req = client.request(options); 
+        const req = https.request(options); 
+        
+        req.on('response', function(response) {
+            let responseData = '';
+            
+            response.on('data', function(chunk) {
+                responseData += chunk;
+            });
+
+            response.on('end', function() {
+                //write reponse on file
+                fs.appendFileSync('./data.txt', JSON.stringify(responseData, null, 2));
+                console.log("Response Data:", responseData);
+            });
+        });
 
         req.write(data);
+
+        
 
         // End the request
         req.end();
