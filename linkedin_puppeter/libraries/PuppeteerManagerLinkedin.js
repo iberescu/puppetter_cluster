@@ -200,9 +200,33 @@ class PuppeteerManagerLinkedin {
                                     // get industry
                                     jobDetails.industry = "";
 
+                                    // go to contact detail page
+                                    await page.evaluate(() => {
+                                        document.querySelector('div > .hirer-card__hirer-information > a').click();
+                                    });
+                                    await this.sleep(4000);
+                                    
+                                    // get contact details from the profile page
+                                    await page.waitForXPath('/html/body/div[5]/div[3]/div[4]/div/div/main/div/div[2]/div/div[2]/div[1]/div/div[1]/div/div[1]/div[1]/div[2]');
+                                    const getLocationDesc = await page.$x('/html/body/div[5]/div[3]/div[4]/div/div/main/div/div[2]/div/div[2]/div[1]/div/div[1]/div/div[1]/div[1]/div[2]');
+                                    const locationDesc = await page.evaluate(el => el.innerText, getLocationDesc[0]);
+                                    const contactPersonLocation = locationDesc.split(",");
+                                    
+                                    // back to job list page
+                                    await page.goBack();
+                                    await this.sleep(4000);
+
+                                    
+
+                                    // code for company and country details
+                                    await page.waitForXPath('/html/body/div[5]/div[3]/div[4]/div/div/main/div/div[2]/div/div[2]/div[1]/div/div[1]/div/div[1]/div[1]/div[2]');
+                                    const getJobDesc = await page.$x('/html/body/div[5]/div[3]/div[4]/div/div/main/div/div[2]/div/div[2]/div[1]/div/div[1]/div/div[1]/div[1]/div[2]');
+                                    const jobDesc = await page.evaluate(el => el.innerText, getJobDesc[0]);
+                                    const jobCompanyCountry = jobDesc.split("·");
+                                    // await this.sleep(1000);
 
                                     // get job location
-                                    jobDetails.location = this.location;
+                                    jobDetails.location = jobCompanyCountry[1];
 
                                     // hiring team job profile in company
                                     const job_title = await page.evaluate(() => {
@@ -225,16 +249,9 @@ class PuppeteerManagerLinkedin {
                                     jobDetails.hr_job_linkedin_url = hr_job_linkedin_url;
                                     // await this.sleep(1000);
 
-                                    // code for company and country details
-                                    await page.waitForXPath('/html/body/div[5]/div[3]/div[4]/div/div/main/div/div[2]/div/div[2]/div[1]/div/div[1]/div/div[1]/div[1]/div[2]');
-                                    const getJobDesc = await page.$x('/html/body/div[5]/div[3]/div[4]/div/div/main/div/div[2]/div/div[2]/div[1]/div/div[1]/div/div[1]/div[1]/div[2]');
-                                    const jobDesc = await page.evaluate(el => el.innerText, getJobDesc[0]);
-                                    const jobCompanyCountry = jobDesc.split("·");
-                                    // await this.sleep(1000);
-
                                     // get country
-                                    jobDetails.country = jobCompanyCountry[1];
-
+                                    jobDetails.country = this.location; //jobCompanyCountry[1];
+                                    
                                     // get company
                                     jobDetails.company = jobCompanyCountry[0];
 
@@ -269,8 +286,8 @@ class PuppeteerManagerLinkedin {
                             fs.appendFileSync('./data.txt', JSON.stringify(jobs, null, 2));
                             this.postData.user_id = 21;
                             this.postData.data = jobs;
-                            await this.sendData(this.postData);
-                            // console.log(this.postData);
+                            // await this.sendData(this.postData);
+                            console.log(this.postData);
                         } else {
                             console.log("No job data");
                         }
