@@ -207,16 +207,17 @@ class PuppeteerManagerLinkedin {
                                     await this.sleep(4000);
                                     
                                     // get contact details from the profile page
-                                    await page.waitForXPath('/html/body/div[5]/div[3]/div[4]/div/div/main/div/div[2]/div/div[2]/div[1]/div/div[1]/div/div[1]/div[1]/div[2]');
-                                    const getLocationDesc = await page.$x('/html/body/div[5]/div[3]/div[4]/div/div/main/div/div[2]/div/div[2]/div[1]/div/div[1]/div/div[1]/div[1]/div[2]');
-                                    const locationDesc = await page.evaluate(el => el.innerText, getLocationDesc[0]);
-                                    const contactPersonLocation = locationDesc.split(",");
+                                    // await page.waitForXPath('/html/body/div[5]/div[3]/div/div/div[2]/div/div/main/section[1]/div[2]/div[2]/div[2]/span[1]');
+                                    // const getLocationDesc = await page.$x('/html/body/div[5]/div[3]/div/div/div[2]/div/div/main/section[1]/div[2]/div[2]/div[2]/span[1]');
+                                    // const locationDesc = await page.evaluate(el => el.innerText, getLocationDesc[0]);
+                                    // const contactPersonLocation = locationDesc;// locationDesc.split(",");
+                                    const contactPersonLocation = await page.evaluate(() => {
+                                        return document.querySelector('div > .pv-text-details__left-panel > span.text-body-small').innerText
+                                    });
+                                    await this.sleep(2000);
                                     
                                     // back to job list page
                                     await page.goBack();
-                                    await this.sleep(4000);
-
-                                    
 
                                     // code for company and country details
                                     await page.waitForXPath('/html/body/div[5]/div[3]/div[4]/div/div/main/div/div[2]/div/div[2]/div[1]/div/div[1]/div/div[1]/div[1]/div[2]');
@@ -226,7 +227,7 @@ class PuppeteerManagerLinkedin {
                                     // await this.sleep(1000);
 
                                     // get job location
-                                    jobDetails.location = jobCompanyCountry[1];
+                                    jobDetails.location = contactPersonLocation;
 
                                     // hiring team job profile in company
                                     const job_title = await page.evaluate(() => {
@@ -286,8 +287,8 @@ class PuppeteerManagerLinkedin {
                             fs.appendFileSync('./data.txt', JSON.stringify(jobs, null, 2));
                             this.postData.user_id = 21;
                             this.postData.data = jobs;
-                            // await this.sendData(this.postData);
-                            console.log(this.postData);
+                            await this.sendData(this.postData);
+                            //console.log(this.postData);
                         } else {
                             console.log("No job data");
                         }
