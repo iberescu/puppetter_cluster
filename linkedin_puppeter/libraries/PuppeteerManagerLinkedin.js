@@ -8,6 +8,9 @@ class PuppeteerManagerLinkedin {
         this.location = args.location;
         this.type = args.type;
         this.date_posted = args.date_posted;
+        this.userID = args.user_id;
+        this.endpoint_host = args.endpoint_host;
+        this.endpoint_path = args.endpoint_path;
         this.return = '';
         this.postData = {};
     }
@@ -27,6 +30,7 @@ class PuppeteerManagerLinkedin {
         });
 
         let page = await browser.newPage();
+
         await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36');
         
         const cookiesArr = require('../cookiesLinkedin.json');
@@ -200,34 +204,38 @@ class PuppeteerManagerLinkedin {
                                     // get industry
                                     jobDetails.industry = "";
 
-                                    // go to contact detail page
-                                    await page.evaluate(() => {
-                                        document.querySelector('div > .hirer-card__hirer-information > a').click();
-                                    });
-                                    await this.sleep(4000);
+                                    // go to contact detail page - Not to use for now 21082023
+                                    // await page.evaluate(() => {
+                                    //     document.querySelector('div > .hirer-card__hirer-information > a').click();
+                                    // });
+                                    // await this.sleep(4000);
                                     
                                     // get contact details from the profile page
                                     // await page.waitForXPath('/html/body/div[5]/div[3]/div/div/div[2]/div/div/main/section[1]/div[2]/div[2]/div[2]/span[1]');
                                     // const getLocationDesc = await page.$x('/html/body/div[5]/div[3]/div/div/div[2]/div/div/main/section[1]/div[2]/div[2]/div[2]/span[1]');
                                     // const locationDesc = await page.evaluate(el => el.innerText, getLocationDesc[0]);
-                                    // const contactPersonLocation = locationDesc;// locationDesc.split(",");
-                                    const contactPersonLocation = await page.evaluate(() => {
-                                        return document.querySelector('div > .pv-text-details__left-panel > span.text-body-small').innerText
-                                    });
-                                    await this.sleep(2000);
+                                    // const contactPersonLocation = locationDesc.split(",");
                                     
-                                    // back to job list page
-                                    await page.goBack();
+                                    // contact person location from contact details page - Not to use for now 21082023
+                                    // const contactPersonLocation = await page.evaluate(() => {
+                                    //     return document.querySelector('div > .pv-text-details__left-panel > span.text-body-small').innerText
+                                    // });
+                                    // await this.sleep(2000);
+                                    
+                                    // back to job list page for fetching data form contact page - Not to use for now 21082023
+                                    // await page.goBack();
+
+
 
                                     // code for company and country details
                                     await page.waitForXPath('/html/body/div[5]/div[3]/div[4]/div/div/main/div/div[2]/div/div[2]/div[1]/div/div[1]/div/div[1]/div[1]/div[2]');
                                     const getJobDesc = await page.$x('/html/body/div[5]/div[3]/div[4]/div/div/main/div/div[2]/div/div[2]/div[1]/div/div[1]/div/div[1]/div[1]/div[2]');
                                     const jobDesc = await page.evaluate(el => el.innerText, getJobDesc[0]);
                                     const jobCompanyCountry = jobDesc.split("·");
-                                    // await this.sleep(1000);
+                                    await this.sleep(1000);
 
                                     // get job location
-                                    jobDetails.location = contactPersonLocation;
+                                    jobDetails.location = jobCompanyCountry[1];// contactPersonLocation;
 
                                     // hiring team job profile in company
                                     const job_title = await page.evaluate(() => {
@@ -267,7 +275,7 @@ class PuppeteerManagerLinkedin {
 
                                     // get contact emails
                                     jobDetails.emails = []; 
-
+                                    
                                     // get job details added
                                     jobs.push(jobDetails);
                                     // await this.sleep(1000);
@@ -285,7 +293,7 @@ class PuppeteerManagerLinkedin {
                         // send data to API if job details are available
                         if (jobs.length > 0) {
                             fs.appendFileSync('./data.txt', JSON.stringify(jobs, null, 2));
-                            this.postData.user_id = 21;
+                            this.postData.user_id = this.userID;
                             this.postData.data = jobs;
                             await this.sendData(this.postData);
                             //console.log(this.postData);
@@ -328,13 +336,15 @@ class PuppeteerManagerLinkedin {
      */  
     async sendData(postData) {
         
-        console.log("Post Data", postData);
+        // console.log("Post Data", postData);
+        console.log(this.endpoint_host + this.endpoint_path);
         const data = JSON.stringify(postData);
         const https = require('https');
         const options = {
-            hostname: 'testapp.leadmaker.io',
+            hostname: this.endpoint_host,
             port: 443,
-            path: '/api/crawljobs',
+            path: this.endpoint_path,
+            // rejectUnauthorized: false,
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json', // Set the appropriate Content-Type header
