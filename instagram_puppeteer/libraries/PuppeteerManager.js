@@ -9,7 +9,7 @@ class PuppeteerManager {
         this.newPostUrl = args.imageUrl;
         this.return = '';
         this.captionText = args.captionText;
-        this.is_production = true;
+        this.is_production = false;
     }
 
     async runPuppeteer() {
@@ -32,7 +32,7 @@ class PuppeteerManager {
           this.is_production
             ? // Connect to browserless so we don't run Chrome on the same hardware in production
             puppeteer.connect({ 
-                browserWSEndpoint:'wss://chrome.browserless.io?token=c0ea113f-d72e-4a3b-a3ec-71224200911e&headless=true&--window-size=1280,800&ignoreDefaultArgs=true',
+                browserWSEndpoint:'wss://chrome.browserless.io?token=c0ea113f-d72e-4a3b-a3ec-71224200911e&headless=true&--window-size=1280,800&--start-fullscreen&ignoreDefaultArgs=true',
                 // browserWSEndpoint: 'wss://chrome.browserless.io?token=c0ea113f-d72e-4a3b-a3ec-71224200911e&headless=false',
                 // slowMo: 1000, 
             })
@@ -412,7 +412,7 @@ class PuppeteerManager {
                     return false
                 }
             }
-            case "scrollWall": {
+            case "scrollWall": { // working on
                 try {
                     const z_scroll_number = command.scrollNumber;
                     const x_wait_after_each_scroll = command.waitTimeAfterScroll * 1000; //convert api seconds into milliseconds
@@ -431,21 +431,47 @@ class PuppeteerManager {
                         await page.evaluate(el => el.click(), closeNotificationModal[0])
                     }*/
 
-                    // check for notification modal and close it - step 1
-                    let notificationModal;
+                    /* Start check for notification modal and close it - step 1 */
+                    const notificationModal = await page.evaluate(() => {
+                        return document.querySelector('div[role="dialog"]').querySelector('span').textContent;
+                    })
+
+                    /*let notificationModal = "";
                     if (this.is_production) {
-                        notificationModal = await page.$x('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[2]/div/div/div/div/div[2]/div/div/div[2]/span[1]');
+                        notificationModal = await page.evaluate(() => {
+                            return document.querySelector('div[role="dialog"]').querySelector('span').textContent;
+                        })
                     } else {
-                        await page.waitForXPath('//span[contains(text(),"Turn on notifications")]')
-                        notificationModal = await page.$x('//span[contains(text(),"Turn on notifications")]');
+                        // await page.waitForXPath('//span[contains(text(),"Turn on notifications")]')
+                        // notificationModal = await page.$x('//span[contains(text(),"Turn on notifications")]');
+                        notificationModal = await page.evaluate(() => {
+                            return document.querySelector('div[role="dialog"]').querySelector('span').textContent;
+                        })
+                    }*/
+                    
+                    if (notificationModal == 'Turn on Notifications' || notificationModal == 'Turn on notifications') {
+                        /*if (this.is_production) {
+                            await page.evaluate(() => {
+                                document.querySelector('div[role="dialog"]').querySelectorAll('button')[1].click()
+                            })
+                        } else {
+                            const closeNotificationModal = await page.$x('//button[contains(text(),"Not Now")]');
+                            await page.evaluate(el => el.click(), closeNotificationModal[0]);
+                        }*/
+                        await page.evaluate(() => {
+                            document.querySelector('div[role="dialog"]').querySelectorAll('button')[1].click()
+                        })
                     }
-
                     await this.sleep(1000);
-
+                    /* End check for notification modal and close it - step 1 */
+                    console.log("check");
+                    await page.waitForSelector('main > div', { timeout: 5_000 });
                     const elem = await page.$('main > div');
                     const boundingBox = await elem.boundingBox();
+                    
                     console.log("postToLikePerScroll", postToLikePerScroll)
                     console.log(boundingBox);
+
                     let likePosts = 0;
                     for (var i = 0; i < z_scroll_number; i++) {
                         await page.mouse.move(
@@ -471,7 +497,6 @@ class PuppeteerManager {
                                 }, likePosts)
 
                                 likePosts++;
-                                // console.log(likePosts)
                             }
                         }
                         
@@ -480,6 +505,7 @@ class PuppeteerManager {
                     }
                     
                     await this.sleep('2000');
+                    console.log("Page scrolled " + z_scroll_number + " number of times. With " + x_wait_after_each_scroll + " milliseconds wait time after each scroll");
                     this.return = "Page scrolled " + z_scroll_number + " number of times. With " + x_wait_after_each_scroll + " milliseconds wait time after each scroll";
                     return true;
                 } catch( error ) {
