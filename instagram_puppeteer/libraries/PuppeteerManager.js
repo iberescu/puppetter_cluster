@@ -9,7 +9,7 @@ class PuppeteerManager {
         this.newPostUrl = args.imageUrl;
         this.return = '';
         this.captionText = args.captionText;
-        this.is_production = false;
+        this.is_production = true;
     }
 
     async runPuppeteer() {
@@ -420,17 +420,6 @@ class PuppeteerManager {
 
                     const postToLikePerScroll = Math.ceil(y_postToLike / z_scroll_number);
                     
-                    // check for notification modal and close it
-                    /*await page.waitForXPath('//span[contains(text(),"Turn on notifications")]')
-                    const notificationModal = await page.$x('//span[contains(text(),"Turn on notifications")]');
-                    const isNotificationPopUp = await page.evaluate(el => el.length, notificationModal)
-                    
-                    if (isNotificationPopUp) {
-                        await page.waitForXPath('//button[contains(text(),"Not Now")]')
-                        const closeNotificationModal = await page.$x('//button[contains(text(),"Not Now")]');
-                        await page.evaluate(el => el.click(), closeNotificationModal[0])
-                    }*/
-
                     /* Start check for notification modal and close it - step 1 */
                     const notificationModal = await page.evaluate(() => {
                         return document.querySelector('div[role="dialog"]').querySelector('span').textContent;
@@ -465,8 +454,8 @@ class PuppeteerManager {
                     await this.sleep(1000);
                     /* End check for notification modal and close it - step 1 */
                     console.log("check");
-                    await page.waitForSelector('main > div', { timeout: 5_000 });
-                    const elem = await page.$('main > div');
+                    await page.waitForSelector('section > main > div', { timeout: 5_000 });
+                    const elem = await page.$('section > main > div');
                     const boundingBox = await elem.boundingBox();
                     
                     console.log("postToLikePerScroll", postToLikePerScroll)
@@ -474,14 +463,19 @@ class PuppeteerManager {
 
                     let likePosts = 0;
                     for (var i = 0; i < z_scroll_number; i++) {
+                        
+                        /*await page.evaluate(() => {
+                            document.querySelectorAll('div > section > main div')[0].scrollBy(0, 200);
+                        })*/
+
                         await page.mouse.move(
                           boundingBox.x + boundingBox.width / 2,
                           boundingBox.y + boundingBox.height / 2
                         );
                         // scroll
-                        await page.mouse.wheel({deltaY: 700});
+                        await page.mouse.wheel({deltaY: 600});
                         
-                        await this.sleep('2000')
+                        await this.sleep('2500')
                         
                         // like post
                         if (postToLikePerScroll == 1) {
