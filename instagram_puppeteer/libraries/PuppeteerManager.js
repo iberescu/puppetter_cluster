@@ -128,7 +128,9 @@ class PuppeteerManager {
                     await page.waitForXPath('//div[contains(text(), "Create new post")]');
                     
                     // Step - 2 Choose file
-                    const selectButton = await page.$x('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[3]/div/div/div/div/div[2]/div/div/div/div[2]/div[1]/div/div/div[2]/div/button')
+                    // const selectButton = await page.$x('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[3]/div/div/div/div/div[2]/div/div/div/div[2]/div[1]/div/div/div[2]/div/button')
+                    await page.waitForXPath('//button[contains(text(), "Select From Computer")]');
+                    const selectButton = await page.$x('//button[contains(text(), "Select From Computer")]');
                     const [fileChoose] = await Promise.all([
                         //page.waitForSelector('button'),
                         page.waitForFileChooser(),
