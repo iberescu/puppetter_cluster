@@ -128,7 +128,41 @@ class PuppeteerManager {
                     await page.waitForXPath('//div[contains(text(), "Create new post")]');
                     
                     // Step - 2 Choose file
+                    
+                    /*const buttonBubble = await page.$$eval('button[type="button"]').filter(element => element.innerText.includes('Select From Computer'));
+                    const newButtonBubble = await buttonBubble.filter(element => element.innerText.includes('Select From Computer'))
+                    console.log(buttonBubble); return;*/
+
+                    /*const selectButton = await page.$$('button[type="button"]').filter(element => element.innerText.includes('Select From Computer'))*/
+                    
+                    /*const selectButton = await page.evaluate(() => {
+                        document.querySelectorAll('button[type="button"]').forEach((e) => {
+                            const p = e.filter(element => element.innerText.includes('Select From Computer'));
+                            return p;
+                        })
+                    })*/
+
+                    /* const selectButton = await page.evaluate(() => {
+                        const val = [...document.querySelectorAll('button')]
+                                    .filter(element => 
+                                      element.innerText.includes('Select From Computer')
+                                    )
+                        return val;
+                    }) */
+
+                    /*const selectButton = await page.evaluate(() => {
+                        let buttonValue = document.querySelectorAll('button[type="button"]').forEach((e) => {
+                            if (e.textContent == "Select From Computer") {
+                                buttonValue = e;   
+                            }
+                        })
+                        return buttonValue;
+                    });
+                    console.log(selectButton); return true;*/
+
                     // const selectButton = await page.$x('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[3]/div/div/div/div/div[2]/div/div/div/div[2]/div[1]/div/div/div[2]/div/button')
+
+                    // working fine with puppeteer headful mode
                     await page.waitForXPath('//button[contains(text(), "Select From Computer")]');
                     const selectButton = await page.$x('//button[contains(text(), "Select From Computer")]');
                     const [fileChoose] = await Promise.all([
