@@ -32,7 +32,7 @@ class PuppeteerManager {
           this.is_production
             ? // Connect to browserless so we don't run Chrome on the same hardware in production
             puppeteer.connect({ 
-                browserWSEndpoint:'wss://chrome.browserless.io?token=c0ea113f-d72e-4a3b-a3ec-71224200911e&headless=true&--window-size=1280,800&--start-fullscreen&ignoreDefaultArgs=true',
+                browserWSEndpoint:'wss://chrome.browserless.io?token=c0ea113f-d72e-4a3b-a3ec-71224200911e&headless=true&--window-size=1280,800&--start-fullscreen&ignoreDefaultArgs=true&keepalive=600000',
                 // browserWSEndpoint: 'wss://chrome.browserless.io?token=c0ea113f-d72e-4a3b-a3ec-71224200911e&headless=false',
                 // slowMo: 1000, 
             })
@@ -126,7 +126,11 @@ class PuppeteerManager {
 
                     // wait to open create post popup
                     await page.waitForXPath('//div[contains(text(), "Create new post")]');
-                    
+                    // const getPopUp = await page.$x('//div[contains(text(), "Create new post")]');
+                    // const popUpName = await page.evaluate(el => el.textContent, getPopUp[0]);
+                    // console.log(popUpName);
+                    // return true;
+                    await this.sleep(4000);
                     // Step - 2 Choose file
                     
                     /*const buttonBubble = await page.$$eval('button[type="button"]').filter(element => element.innerText.includes('Select From Computer'));
@@ -149,11 +153,19 @@ class PuppeteerManager {
                                     )
                         return val;
                     }) */
+                    /*await page.waitForSelector('button[type="button"]');
+                    const selectButton = await page.evaluate(() => {
+                        const buttons = document.querySelectorAll('button[type="button"]');
+                        return buttons[0].textContent;
+                        for (var i = 0; i <  ; i--) {
+                            Things[i]
+                        }
 
-                    /*const selectButton = await page.evaluate(() => {
-                        let buttonValue = document.querySelectorAll('button[type="button"]').forEach((e) => {
-                            if (e.textContent == "Select From Computer") {
-                                buttonValue = e;   
+                        let buttonValue = [];
+                        document.querySelectorAll('button').forEach((e, k) => {
+                            buttonValue.push(k);
+                            if (e.textContent == "Select From Computer" || e.textContent == "Select from computer") {
+                                buttonValue = k;   
                             }
                         })
                         return buttonValue;
@@ -163,8 +175,14 @@ class PuppeteerManager {
                     // const selectButton = await page.$x('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[3]/div/div/div/div/div[2]/div/div/div/div[2]/div[1]/div/div/div[2]/div/button')
 
                     // working fine with puppeteer headful mode
-                    await page.waitForXPath('//button[contains(text(), "Select From Computer")]');
-                    const selectButton = await page.$x('//button[contains(text(), "Select From Computer")]');
+                    let selectButton;
+                    if (this.is_production) {
+                        await page.waitForXPath('//button[contains(text(), "Select from computer")]');
+                        selectButton = await page.$x('//button[contains(text(), "Select from computer")]');
+                    } else {
+                        await page.waitForXPath('//button[contains(text(), "Select From Computer")]');
+                        selectButton = await page.$x('//button[contains(text(), "Select From Computer")]');
+                    }
                     const [fileChoose] = await Promise.all([
                         //page.waitForSelector('button'),
                         page.waitForFileChooser(),
@@ -208,8 +226,19 @@ class PuppeteerManager {
                         await page.waitForSelector('div[aria-label="Write a caption..."]');
                         await page.click('div[aria-label="Write a caption..."]');
                     } else {
-                        const writeCaption = await page.$x('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[3]/div/div/div/div/div[2]/div/div/div/div[2]/div[2]/div/div/div/div[2]/div[1]/div[1]')
+                        //const writeCaption = await page.$x('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[3]/div/div/div/div/div[2]/div/div/div/div[2]/div[2]/div/div/div/div[2]/div[1]/div[1]')
+                        await page.waitForXPath('//div[contains(text(), "Write a caption...")]');
+                        const writeCaption = await page.$x('//div[contains(text(), "Write a caption...")]');
                         await page.evaluate(el => el.click(), writeCaption[0]);
+                        // const values = await page.evaluate(() => {
+                        //     let value = [];
+                        //     document.querySelectorAll('div').forEach((e) => {
+                        //         value.push(e);
+                        //     });
+                        //     return value;
+                        // })
+                        // console.log(values) 
+                        // return true;
                     }
                     
                     await page.keyboard.type(this.captionText, { delay: 100 });
