@@ -32,7 +32,7 @@ class PuppeteerManager {
           this.is_production
             ? // Connect to browserless so we don't run Chrome on the same hardware in production
             puppeteer.connect({ 
-                browserWSEndpoint:'wss://chrome.browserless.io?token=c0ea113f-d72e-4a3b-a3ec-71224200911e&headless=true&--window-size=1280,800&--start-fullscreen&ignoreDefaultArgs=true&keepalive=600000',
+                browserWSEndpoint:'wss://chrome.browserless.io?token=c0ea113f-d72e-4a3b-a3ec-71224200911e&headless=true&--window-size=1280,800&--start-fullscreen&ignoreDefaultArgs=false&keepalive=600000',
                 // browserWSEndpoint: 'wss://chrome.browserless.io?token=c0ea113f-d72e-4a3b-a3ec-71224200911e&headless=false',
                 // slowMo: 1000, 
             })
@@ -183,17 +183,23 @@ class PuppeteerManager {
                         await page.waitForXPath('//button[contains(text(), "Select From Computer")]');
                         selectButton = await page.$x('//button[contains(text(), "Select From Computer")]');
                     }
+
                     const [fileChoose] = await Promise.all([
                         //page.waitForSelector('button'),
                         page.waitForFileChooser(),
                         page.evaluate(el => el.click(), selectButton[0])
                     ]);
                     await fileChoose.accept(['/opt/lampp/htdocs/instars/views/img/temp.jpg']);
-                    await this.sleep('2000');
+                    await this.sleep('4000');
                     console.log("Step-2 Completed")
                     /*Code with changed selector*/
                     
                     /*New Code for crop*/
+                    
+                    // const stepName = await page.$x('//div[contains(text(), "Crop")]');
+                    // const currentStep = await page.evaluate(el => el.textContent, stepName[0]);
+                    // console.log(currentStep);
+                    // return true;
                     await page.evaluate(() => {
                         const divs = document.querySelectorAll('div')
                         divs.forEach((e, k) => {
@@ -208,6 +214,7 @@ class PuppeteerManager {
                     /*New Code for crop*/
                     
                     /*New Code for Edit*/
+                    // await page.waitForXPath('//div[contains(text(), "Edit")]');
                     await page.evaluate(() => {
                         const divs = document.querySelectorAll('div')
                         divs.forEach((e, k) => {
@@ -217,7 +224,7 @@ class PuppeteerManager {
                         })
                         return "Next";
                     })
-                    await this.sleep('2000');
+                    await this.sleep('6000');
                     console.log("Step-4 Completed")
                     /*New Code for Edit*/
                     
@@ -226,10 +233,26 @@ class PuppeteerManager {
                         await page.waitForSelector('div[aria-label="Write a caption..."]');
                         await page.click('div[aria-label="Write a caption..."]');
                     } else {
+                        await page.waitForXPath('//div[contains(text(), "Create new post")]');
+                        const getCurrentSection = await page.$x('//div[contains(text(), "Create new post")]');
+                        const sectionName = await page.evaluate(el => el.textContent, getCurrentSection[0])
+
+                        console.log(sectionName); 
+                        return true;
+
+                        // await page.waitForSelector('div[aria-label="Write a caption..."]');
+                        // await page.click('div[aria-label="Write a caption..."]');
+
+                        // await page.waitForXPath('//span[contains(text(), "harperdavid405")]');
+                        // const getUserName = await page.$x('//span[contains(text(), "harperdavid405")]');
+                        // const getName = await page.evaluate(el => el.textContent, getUserName[0]);
+                        // console.log(getName); return;
+                        // const writeCaption = await page.$x('/html/body/div[8]/div[1]/div/div[3]/div/div/div/div/div[2]/div/div/div/div[2]/div[2]/div/div/div/div[2]/div[1]/div[1]');
+                        // await page.evaluate(el => el.click(), writeCaption[0]);
                         //const writeCaption = await page.$x('/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[3]/div/div/div/div/div[2]/div/div/div/div[2]/div[2]/div/div/div/div[2]/div[1]/div[1]')
-                        await page.waitForXPath('//div[contains(text(), "Write a caption...")]');
-                        const writeCaption = await page.$x('//div[contains(text(), "Write a caption...")]');
-                        await page.evaluate(el => el.click(), writeCaption[0]);
+                        // await page.waitForXPath('//div[contains(text(), "Write a caption...")]');
+                        // const writeCaption = await page.$x('//div[contains(text(), "Write a caption...")]');
+                        // await page.evaluate(el => el.click(), writeCaption[0]);
                         // const values = await page.evaluate(() => {
                         //     let value = [];
                         //     document.querySelectorAll('div').forEach((e) => {
@@ -239,6 +262,22 @@ class PuppeteerManager {
                         // })
                         // console.log(values) 
                         // return true;
+
+                        const sectionSelector = await page.evaluate(() => {
+                            let selectorName;
+                            const divs = document.querySelectorAll('div');
+                            divs.forEach((e, k) => {
+                                if(e.textContent == "Write a caption..."){
+                                    // e.click();
+                                    selectorName = e.textContent;
+                                }
+                            })
+                            // return "Next";
+                            return selectorName;
+                        })
+
+                        console.log(sectionSelector);
+                        return true;
                     }
                     
                     await page.keyboard.type(this.captionText, { delay: 100 });
