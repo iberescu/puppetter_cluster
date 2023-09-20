@@ -9,7 +9,7 @@ class PuppeteerManager {
         this.newPostUrl = args.imageUrl;
         this.return = '';
         this.captionText = args.captionText;
-        this.is_production = true;
+        this.is_production = false; // true = browserless false = puppeteer normal
     }
 
     async runPuppeteer() {
@@ -32,13 +32,16 @@ class PuppeteerManager {
           this.is_production
             ? // Connect to browserless so we don't run Chrome on the same hardware in production
             puppeteer.connect({ 
-                browserWSEndpoint:'wss://chrome.browserless.io?token=c0ea113f-d72e-4a3b-a3ec-71224200911e&headless=true&--window-size=1280,800&--start-fullscreen&ignoreDefaultArgs=false&keepalive=600000',
+                browserWSEndpoint:'wss://chrome.browserless.io?token=c0ea113f-d72e-4a3b-a3ec-71224200911e&headless=false&--window-size=1280,800&--start-fullscreen&ignoreDefaultArgs=false&keepalive=600000',
                 // browserWSEndpoint: 'wss://chrome.browserless.io?token=c0ea113f-d72e-4a3b-a3ec-71224200911e&headless=false',
                 // slowMo: 1000, 
             })
             : // Run the browser locally while in development
             puppeteer.launch({
-                headless: false,
+                // `headless: true` (default) enables old Headless;
+                // `headless: 'new'` enables new Headless;
+                // `headless: false` enables “headful” mode.
+                headless: 'new',
                 args: [
                     "--no-sandbox",
                     "--disable-gpu",
@@ -189,16 +192,17 @@ class PuppeteerManager {
                         page.waitForFileChooser(),
                         page.evaluate(el => el.click(), selectButton[0])
                     ]);
+                    
                     await fileChoose.accept(['/opt/lampp/htdocs/instars/views/img/temp.jpg']);
-                    await this.sleep('4000');
+                    // await page.waitForNavigation();
+                    await this.sleep('2000');
                     console.log("Step-2 Completed")
                     /*Code with changed selector*/
                     
                     /*New Code for crop*/
-                    
-                    // const stepName = await page.$x('//div[contains(text(), "Crop")]');
-                    // const currentStep = await page.evaluate(el => el.textContent, stepName[0]);
-                    // console.log(currentStep);
+                    const stepName = await page.$x('//div[contains(text(), "Crop")]');
+                    const currentStep = await page.evaluate(el => el.textContent, stepName[0]);
+                    console.log(currentStep);
                     // return true;
                     await page.evaluate(() => {
                         const divs = document.querySelectorAll('div')
