@@ -41,7 +41,8 @@ class PuppeteerManager {
                 // `headless: true` (default) enables old Headless;
                 // `headless: 'new'` enables new Headless;
                 // `headless: false` enables “headful” mode.
-                headless: 'new',
+                // headless: 'new',
+                headless: false,
                 args: [
                     "--no-sandbox",
                     "--disable-gpu",
@@ -583,6 +584,11 @@ class PuppeteerManager {
                         // scroll
                         await page.mouse.wheel({deltaY: 600});
                         
+                        // adding new changes for scroll wall 
+                        /*await page.evaluate(() => {
+                            return document.getElementsByTagName("article")[8].scrollIntoView();
+                        });*/
+
                         await this.sleep('2500')
                         
                         // like post
