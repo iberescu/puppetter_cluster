@@ -563,6 +563,53 @@ class PuppeteerManager {
                     await this.sleep(1000);
                     /* End check for notification modal and close it - step 1 */
                     console.log("check");
+
+                    // const scrolls = [];
+                    // scrolls.push(this.randomBetween(10, 20));
+                    // scrolls.push(this.randomBetween(21, 30));
+                    // scrolls.push(this.randomBetween(31, 50));
+                    // scrolls.push(this.randomBetween(51, 65));
+                    // scrolls.push(this.randomBetween(66, 80));
+                    // scrolls.push(100);
+
+                    // for (const scroll of scrolls) {
+                    //     console.log("Scroll " + scroll);
+                    //     await page.evaluate((scrollPercentage) => {
+                    //         const searchResultsContainer = document.querySelector('section > main > div > div');
+                    //         const maxScroll = searchResultsContainer.scrollHeight - searchResultsContainer.clientHeight;
+                    //         searchResultsContainer.scrollTop = (maxScroll * scrollPercentage) / 100;
+                    //     }, scroll);
+                    //     await this.sleep(4000);
+                    // }
+
+                    let like_posts = 0;
+                    for (var i = 0; i < z_scroll_number; i++) {
+                        await page.evaluate(() => {
+                            return window.scrollBy(0, 500);
+                        });
+                        // like post
+                        if (postToLikePerScroll == 1) {
+                            await page.evaluate((i) => {
+                                return document.querySelectorAll('article')[i].querySelectorAll('section')[0].querySelectorAll('span > button')[0].click();
+                            }, i)
+                        } else {
+                            for (var j = 0; j < postToLikePerScroll; j++) {
+                                console.log(like_posts)
+                                await page.evaluate((likePosts) => {
+                                    // return document.querySelectorAll('article')[likePosts].querySelectorAll('section')[0].querySelectorAll('span')[0].click();
+                                    // return document.querySelectorAll('article')[likePosts].querySelector('div').children[2].querySelector('div').children[0].querySelector('div > span').querySelectorAll('div')[0].click();
+                                    return document.querySelectorAll('article')[likePosts].querySelectorAll('div > span > div')[1].click();
+                                }, like_posts)
+
+                                like_posts++;
+                            }
+                        }
+                        await this.sleep(x_wait_after_each_scroll);
+                    }
+
+                    await this.sleep(4000);
+                    return true;
+
                     await page.waitForSelector('section > main > div', { timeout: 5_000 });
                     const elem = await page.$('section > main > div');
                     const boundingBox = await elem.boundingBox();
@@ -600,8 +647,9 @@ class PuppeteerManager {
                             for (var j = 0; j < postToLikePerScroll; j++) {
                                 console.log(likePosts)
                                 await page.evaluate((likePosts) => {
-                                    // return document.querySelectorAll('article')[likePosts].querySelectorAll('section')[0].querySelectorAll('span > button')[0].click();
-                                    return document.querySelectorAll('article')[likePosts].querySelector('div').children[2].querySelector('div').children[0].querySelector('div > span').querySelectorAll('div')[0].click();
+                                    // return document.querySelectorAll('article')[likePosts].querySelectorAll('section')[0].querySelectorAll('span')[0].click();
+                                    // return document.querySelectorAll('article')[likePosts].querySelector('div').children[2].querySelector('div').children[0].querySelector('div > span').querySelectorAll('div')[0].click();
+                                    return document.querySelectorAll('article')[likePosts].querySelectorAll('div > span > div')[1].click();
                                 }, likePosts)
 
                                 likePosts++;
@@ -699,6 +747,13 @@ class PuppeteerManager {
             }
         });
     } 
+
+
+    // JavaScript ES6
+    randomBetween(min, max){
+        const delta = max - min;
+        return Math.round(min + Math.random() * delta);
+    };
 }
 
 module.exports = { PuppeteerManager }
