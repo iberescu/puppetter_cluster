@@ -1,0 +1,17 @@
+{
+  "name": "linkedinpuppeteer",
+  "version": "1.0.0",
+  "description": "This app get data from linkedin",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "HR",
+  "license": "ISC",
+  "dependencies": {
+    "fastify": "^4.21.0",
+    "fs": "^0.0.1-security",
+    "https": "^1.0.0",
+    "puppeteer": "^21.1.0"
+  }
+}

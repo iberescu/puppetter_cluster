@@ -9,9 +9,10 @@ class PuppeteerManagerLinkedin {
         this.type = args.type;
         this.date_posted = args.date_posted;
         this.userID = args.user_id;
+        this.tags = args.tags;
         this.endpoint_host = args.endpoint_host;
         this.endpoint_path = args.endpoint_path;
-        this.return = '';
+        this.return = "";
         this.postData = {};
     }
 
@@ -25,12 +26,18 @@ class PuppeteerManagerLinkedin {
             args: [
                 "--no-sandbox",
                 "--disable-gpu",
+                "--start-maximized", 
+                "--window-size=1920,1080"
             ],
             defaultViewport: null
         });
 
         let page = await browser.newPage();
 
+        /*await page.setViewport({
+          width: 1366,
+          height: 768,
+        });*/
         await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36');
         
         const cookiesArr = require('../cookiesLinkedin.json');
@@ -54,7 +61,6 @@ class PuppeteerManagerLinkedin {
             }
             commandIndex++
         }
-        console.log('done')
         await browser.close();
     }
 
@@ -62,6 +68,14 @@ class PuppeteerManagerLinkedin {
         switch (command.type) {
             case "searchJobs":
                 try { 
+                    
+                    // check for the Date posted and Type
+                    if (await this.validatePostDate(this.date_posted) == "No option found") {
+                        this.return = "Enter a valid job posted date option.";
+                        return false;
+                    } else 
+                        this.date_posted = await this.validatePostDate(this.date_posted);
+
                     /*Start populating fields first*/
                     //click in title field and add title of job
                     await page.waitForSelector('input[aria-label="Search by title, skill, or company"]');
@@ -89,7 +103,7 @@ class PuppeteerManagerLinkedin {
                     await page.evaluate(el => el.click(), searchButton[0]);
                     await this.sleep(2000);
 
-                    // date posted
+                    // Start - Select date filter
                     await page.waitForXPath('//button[text()="Date posted"]');
                     const getDatePostButton = await page.$x('//button[text()="Date posted"]');
                     await page.evaluate(el => el.click(), getDatePostButton[0]);
@@ -98,42 +112,70 @@ class PuppeteerManagerLinkedin {
                     const selectedDatePosted = await page.$x('//span[text()= "'+this.date_posted+'"]');
                     await page.evaluate(el => el.click(), selectedDatePosted[0]);
 
-                    // select date filter result
-                    await page.waitForXPath('/html/body/div[5]/div[3]/div[4]/section/div/section/div/div/div/ul/li[3]/div/div/div/div[1]/div/form/fieldset/div[2]/button[2]');
-                    const selectDatePostedResult = await page.$x('/html/body/div[5]/div[3]/div[4]/section/div/section/div/div/div/ul/li[3]/div/div/div/div[1]/div/form/fieldset/div[2]/button[2]');
-                    await page.evaluate(el => el.click(), selectDatePostedResult[0]);
-                    await this.sleep(4000);
-                    
-                    //type 
-                    await page.waitForXPath('//div[@data-basic-filter-parameter-name="workplaceType"]//button[@aria-label="On-site/remote filter. Clicking this button displays all On-site/remote filter options."]');
-                    const getWorkPlaceTypeButton = await page.$x('//div[@data-basic-filter-parameter-name="workplaceType"]//button[@aria-label="On-site/remote filter. Clicking this button displays all On-site/remote filter options."]');
-                    await page.evaluate(el => el.click(), getWorkPlaceTypeButton[0]);
+                    // await page.waitForXPath('/html/body/div[5]/div[3]/div[4]/section/div/section/div/div/div/ul/li[3]/div/div/div/div[1]/div/form/fieldset/div[2]/button[2]');
+                    // const selectDatePostedResult = await page.$x('/html/body/div[5]/div[3]/div[4]/section/div/section/div/div/div/ul/li[3]/div/div/div/div[1]/div/form/fieldset/div[2]/button[2]');
+                    // await page.evaluate(el => el.click(), selectDatePostedResult[0]);
+                    // await this.sleep(4000); 
+
+                    // await page.waitForSelector('button[data-control-name="filter_show_results"]');
+                    // await page.click('button[data-control-name="filter_show_results"]');
+                    await page.waitForSelector('div[data-basic-filter-parameter-name="timePostedRange"] button[data-control-name="filter_show_results"]');
+                    await page.evaluate(() => {
+                        document.querySelector('div[data-basic-filter-parameter-name="timePostedRange"] button[data-control-name="filter_show_results"]').click();
+                    })
                     await this.sleep(2000);
+                    // End - Select date filter
+                     
+                    
+                    // Start - Select type filter
+                    await page.waitForSelector('#searchFilter_workplaceType');
+                    await page.click('#searchFilter_workplaceType');
+                    // await page.waitForXPath('/html/body/div[5]/div[3]/div[4]/section/div/section/div/div/div/ul/li[6]/div/span/button');
+                    // const getWorkPlaceTypeButton = await page.$x('/html/body/div[5]/div[3]/div[4]/section/div/section/div/div/div/ul/li[6]/div/span/button');
+                    // await page.waitForXPath('//div[@data-basic-filter-parameter-name="workplaceType"]//button[@aria-label="On-site/remote filter. Clicking this button displays all On-site/remote filter options."]');
+                    // const getWorkPlaceTypeButton = await page.$x('//div[@data-basic-filter-parameter-name="workplaceType"]//button[@aria-label="On-site/remote filter. Clicking this button displays all On-site/remote filter options."]');
+                    // await page.evaluate(el => el.click(), getWorkPlaceTypeButton[0]);
+                    // await this.sleep(4000);
 
                     for (const types of this.type) {
                         await page.waitForXPath('//span[text()= "'+ types +'"]');
                         const selectedWorkingType = await page.$x('//span[text()= "'+ types +'"]');
                         await page.evaluate(el => el.click(), selectedWorkingType[0]);
-                        await this.sleep(2000);
                     }
-                    
-                    // select type filter result
-                    await page.waitForXPath('/html/body/div[5]/div[3]/div[4]/section/div/section/div/div/div/ul/li[7]/div/div/div/div[1]/div/form/fieldset/div[2]/button[2]');
-                    const selectTypeResult = await page.$x('/html/body/div[5]/div[3]/div[4]/section/div/section/div/div/div/ul/li[7]/div/div/div/div[1]/div/form/fieldset/div[2]/button[2]');
-                    await page.evaluate(el => el.click(), selectTypeResult[0]);
-                    await this.sleep(4000);
+                    await this.sleep(2000);
 
-                    const searchResultCount = await page.evaluate(() => {
+                    //select type filter result
+                    // await page.waitForXPath('/html/body/div[5]/div[3]/div[4]/section/div/section/div/div/div/ul/li[7]/div/div/div/div[1]/div/form/fieldset/div[2]/button[2]/span');
+                    // const selectTypeResult = await page.$x('/html/body/div[5]/div[3]/div[4]/section/div/section/div/div/div/ul/li[7]/div/div/div/div[1]/div/form/fieldset/div[2]/button[2]/span');
+                    // await page.evaluate(el => el.click(), selectTypeResult[0]);
+                    // await this.sleep(4000);
+                    
+                    // await page.waitForSelector('button[data-control-name="filter_show_results"]');
+                    // await page.click('button[data-control-name="filter_show_results"]');
+                    await page.waitForSelector('div[data-basic-filter-parameter-name="workplaceType"] button[data-control-name="filter_show_results"]');
+                    await page.evaluate(() => {
+                        document.querySelector('div[data-basic-filter-parameter-name="workplaceType"] button[data-control-name="filter_show_results"]').click();
+                    })
+                    // End - Select type filter
+                    await this.sleep(2500);
+
+                    /*const searchResultCount = await page.evaluate(() => {
                         return document.querySelectorAll('.jobs-search-results-list > ul > li').length;
-                    });
+                    });*/
 
                     // get total pages 
-                    const totalPageCount = await page.evaluate(() => {
-                        return document.querySelectorAll('.jobs-search-results-list__pagination > ul > li').length;
+                    const paginationCount = await page.evaluate(() => {
+                        
+                        const paginationSelector = document.querySelector(".jobs-search-results-list__pagination > ul");
+                        const lastElement = paginationSelector.children[paginationSelector.children.length - 1];
+                        const pageCount = lastElement.getAttribute('data-test-pagination-page-btn');
+
+                        return pageCount;
+
                     })
-
-                    for (var i = 2; i <= totalPageCount; i++) {
-
+                    console.log(paginationCount);
+                    for (var i = 1; i <= paginationCount; i++) {
+                        console.log("Page Number: " + i);
                         let jobs = [];
                         const searchResultCount = await page.evaluate(() => {
                             return document.querySelectorAll('.jobs-search-results-list > ul > li').length;
@@ -228,9 +270,15 @@ class PuppeteerManagerLinkedin {
 
 
                                     // code for company and country details
-                                    await page.waitForXPath('/html/body/div[5]/div[3]/div[4]/div/div/main/div/div[2]/div/div[2]/div[1]/div/div[1]/div/div[1]/div[1]/div[2]');
-                                    const getJobDesc = await page.$x('/html/body/div[5]/div[3]/div[4]/div/div/main/div/div[2]/div/div[2]/div[1]/div/div[1]/div/div[1]/div[1]/div[2]');
-                                    const jobDesc = await page.evaluate(el => el.innerText, getJobDesc[0]);
+                                    // await page.waitForXPath('/html/body/div[5]/div[3]/div[4]/div/div/main/div/div[2]/div/div[2]/div[1]/div/div[1]/div/div[1]/div[1]/div[2]');
+                                    // const getJobDesc = await page.$x('/html/body/div[5]/div[3]/div[4]/div/div/main/div/div[2]/div/div[2]/div[1]/div/div[1]/div/div[1]/div[1]/div[2]');
+                                    // const jobDesc = await page.evaluate(el => el.innerText, getJobDesc[0]);
+                                    // const jobCompanyCountry = jobDesc.split("·");
+
+                                    await page.waitForSelector('.job-details-jobs-unified-top-card__primary-description');
+                                    const jobDesc = await page.evaluate(() => {
+                                        return document.querySelector('.job-details-jobs-unified-top-card__primary-description').innerText;
+                                    });
                                     const jobCompanyCountry = jobDesc.split("·");
                                     await this.sleep(1000);
 
@@ -292,23 +340,29 @@ class PuppeteerManagerLinkedin {
                         
                         // send data to API if job details are available
                         if (jobs.length > 0) {
-                            fs.appendFileSync('./data.txt', JSON.stringify(jobs, null, 2));
+                            // fs.appendFileSync('./data.txt', JSON.stringify(jobs, null, 2));
                             this.postData.user_id = this.userID;
+                            this.postData.tags = this.tags;
                             this.postData.data = jobs;
-                            await this.sendData(this.postData);
-                            //console.log(this.postData);
+                            // fs.appendFileSync('./data.txt', JSON.stringify(this.postData, null, 2));
+                            // await this.sendData(this.postData);
+                            console.log(this.postData);
                         } else {
                             console.log("No job data");
                         }
-
-                        await page.evaluate((i) => {
-                            document.querySelectorAll('.jobs-search-results-list__pagination > ul > li')[i].querySelector('button').click();
+                        try {
+                            await page.evaluate((i) => {
+                                document.querySelectorAll('.jobs-search-results-list__pagination > ul > li')[i].querySelector('button').click();
+                                return true;
+                            }, i);
+                            await this.sleep(4000);
+                        } catch (e) {
+                            this.return = "No next page found";
                             return true;
-                        }, i);
-                        await this.sleep(4000);
+                        }
 
                     }
-                    
+                    console.log("Check pages")
                     return true;
                     this.sleep(4000);
                     this.return = "Data found..!!";
@@ -336,8 +390,6 @@ class PuppeteerManagerLinkedin {
      */  
     async sendData(postData) {
         
-        // console.log("Post Data", postData);
-        console.log(this.endpoint_host + this.endpoint_path);
         const data = JSON.stringify(postData);
         const https = require('https');
         const options = {
@@ -373,6 +425,47 @@ class PuppeteerManagerLinkedin {
 
         // End the request
         req.end();
+
+    }
+
+    /**
+     * verify post date type selection
+     * @param string post date option
+     */ 
+    async validatePostDate(value = ""){
+        
+        const postDateAT = [ 'any time', 
+                          'any_time', 
+                          'Anytime', 
+                          'Any time'
+                        ];
+        const postDatePM = [  'past month', 
+                          'past_month',
+                          'Pastmonth',
+                          'Past month'
+                        ];
+        const postDatePW = [ 'past week',
+                          'past_week',
+                          'Pastweek',
+                          'Past week'
+                        ]
+        const postDateHR = [ 'past 24 hours',
+                          'past_24_hours',
+                          'Past24hours',
+                          'Past 24 hours'
+                        ];
+
+        if (postDateAT.includes(value)) {
+            return "Any time";
+        } else if (postDatePM.includes(value)) {
+            return "Past month";
+        } else if (postDatePW.includes(value)) {
+            return "Past week";
+        } else if (postDateHR.includes(value)) {
+            return "Past 24 hours";
+        } else {
+            return "No option found";
+        }
 
     }
 }
