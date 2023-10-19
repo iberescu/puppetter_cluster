@@ -25,6 +25,7 @@ class PuppeteerManagerLinkedin {
             headless: false,
             args: [
                 "--no-sandbox",
+                '--disable-setuid-sandbox',
                 "--disable-gpu",
                 "--start-maximized", 
                 "--window-size=1920,1080"
@@ -112,13 +113,6 @@ class PuppeteerManagerLinkedin {
                     const selectedDatePosted = await page.$x('//span[text()= "'+this.date_posted+'"]');
                     await page.evaluate(el => el.click(), selectedDatePosted[0]);
 
-                    // await page.waitForXPath('/html/body/div[5]/div[3]/div[4]/section/div/section/div/div/div/ul/li[3]/div/div/div/div[1]/div/form/fieldset/div[2]/button[2]');
-                    // const selectDatePostedResult = await page.$x('/html/body/div[5]/div[3]/div[4]/section/div/section/div/div/div/ul/li[3]/div/div/div/div[1]/div/form/fieldset/div[2]/button[2]');
-                    // await page.evaluate(el => el.click(), selectDatePostedResult[0]);
-                    // await this.sleep(4000); 
-
-                    // await page.waitForSelector('button[data-control-name="filter_show_results"]');
-                    // await page.click('button[data-control-name="filter_show_results"]');
                     await page.waitForSelector('div[data-basic-filter-parameter-name="timePostedRange"] button[data-control-name="filter_show_results"]');
                     await page.evaluate(() => {
                         document.querySelector('div[data-basic-filter-parameter-name="timePostedRange"] button[data-control-name="filter_show_results"]').click();
@@ -130,13 +124,7 @@ class PuppeteerManagerLinkedin {
                     // Start - Select type filter
                     await page.waitForSelector('#searchFilter_workplaceType');
                     await page.click('#searchFilter_workplaceType');
-                    // await page.waitForXPath('/html/body/div[5]/div[3]/div[4]/section/div/section/div/div/div/ul/li[6]/div/span/button');
-                    // const getWorkPlaceTypeButton = await page.$x('/html/body/div[5]/div[3]/div[4]/section/div/section/div/div/div/ul/li[6]/div/span/button');
-                    // await page.waitForXPath('//div[@data-basic-filter-parameter-name="workplaceType"]//button[@aria-label="On-site/remote filter. Clicking this button displays all On-site/remote filter options."]');
-                    // const getWorkPlaceTypeButton = await page.$x('//div[@data-basic-filter-parameter-name="workplaceType"]//button[@aria-label="On-site/remote filter. Clicking this button displays all On-site/remote filter options."]');
-                    // await page.evaluate(el => el.click(), getWorkPlaceTypeButton[0]);
-                    // await this.sleep(4000);
-
+                    
                     for (const types of this.type) {
                         await page.waitForXPath('//span[text()= "'+ types +'"]');
                         const selectedWorkingType = await page.$x('//span[text()= "'+ types +'"]');
@@ -144,14 +132,6 @@ class PuppeteerManagerLinkedin {
                     }
                     await this.sleep(2000);
 
-                    //select type filter result
-                    // await page.waitForXPath('/html/body/div[5]/div[3]/div[4]/section/div/section/div/div/div/ul/li[7]/div/div/div/div[1]/div/form/fieldset/div[2]/button[2]/span');
-                    // const selectTypeResult = await page.$x('/html/body/div[5]/div[3]/div[4]/section/div/section/div/div/div/ul/li[7]/div/div/div/div[1]/div/form/fieldset/div[2]/button[2]/span');
-                    // await page.evaluate(el => el.click(), selectTypeResult[0]);
-                    // await this.sleep(4000);
-                    
-                    // await page.waitForSelector('button[data-control-name="filter_show_results"]');
-                    // await page.click('button[data-control-name="filter_show_results"]');
                     await page.waitForSelector('div[data-basic-filter-parameter-name="workplaceType"] button[data-control-name="filter_show_results"]');
                     await page.evaluate(() => {
                         document.querySelector('div[data-basic-filter-parameter-name="workplaceType"] button[data-control-name="filter_show_results"]').click();
@@ -164,16 +144,22 @@ class PuppeteerManagerLinkedin {
                     });*/
 
                     // get total pages 
-                    const paginationCount = await page.evaluate(() => {
-                        
-                        const paginationSelector = document.querySelector(".jobs-search-results-list__pagination > ul");
-                        const lastElement = paginationSelector.children[paginationSelector.children.length - 1];
-                        const pageCount = lastElement.getAttribute('data-test-pagination-page-btn');
+                    let paginationCount = 1;
+                    try {
+                        paginationCount = await page.evaluate(() => {
+                            
+                            const paginationSelector = document.querySelector(".jobs-search-results-list__pagination > ul");
+                            const lastElement = paginationSelector.children[paginationSelector.children.length - 1];
+                            const pageCount = lastElement.getAttribute('data-test-pagination-page-btn');
 
-                        return pageCount;
+                            return pageCount;
 
-                    })
-                    console.log(paginationCount);
+                        })
+                    } catch(e) {
+                        //max 1 page
+                        console.log('no pagination found. Proceeding with single page results');
+                    }
+
                     for (var i = 1; i <= paginationCount; i++) {
                         console.log("Page Number: " + i);
                         let jobs = [];
@@ -246,35 +232,6 @@ class PuppeteerManagerLinkedin {
                                     // get industry
                                     jobDetails.industry = "";
 
-                                    // go to contact detail page - Not to use for now 21082023
-                                    // await page.evaluate(() => {
-                                    //     document.querySelector('div > .hirer-card__hirer-information > a').click();
-                                    // });
-                                    // await this.sleep(4000);
-                                    
-                                    // get contact details from the profile page
-                                    // await page.waitForXPath('/html/body/div[5]/div[3]/div/div/div[2]/div/div/main/section[1]/div[2]/div[2]/div[2]/span[1]');
-                                    // const getLocationDesc = await page.$x('/html/body/div[5]/div[3]/div/div/div[2]/div/div/main/section[1]/div[2]/div[2]/div[2]/span[1]');
-                                    // const locationDesc = await page.evaluate(el => el.innerText, getLocationDesc[0]);
-                                    // const contactPersonLocation = locationDesc.split(",");
-                                    
-                                    // contact person location from contact details page - Not to use for now 21082023
-                                    // const contactPersonLocation = await page.evaluate(() => {
-                                    //     return document.querySelector('div > .pv-text-details__left-panel > span.text-body-small').innerText
-                                    // });
-                                    // await this.sleep(2000);
-                                    
-                                    // back to job list page for fetching data form contact page - Not to use for now 21082023
-                                    // await page.goBack();
-
-
-
-                                    // code for company and country details
-                                    // await page.waitForXPath('/html/body/div[5]/div[3]/div[4]/div/div/main/div/div[2]/div/div[2]/div[1]/div/div[1]/div/div[1]/div[1]/div[2]');
-                                    // const getJobDesc = await page.$x('/html/body/div[5]/div[3]/div[4]/div/div/main/div/div[2]/div/div[2]/div[1]/div/div[1]/div/div[1]/div[1]/div[2]');
-                                    // const jobDesc = await page.evaluate(el => el.innerText, getJobDesc[0]);
-                                    // const jobCompanyCountry = jobDesc.split("·");
-
                                     await page.waitForSelector('.job-details-jobs-unified-top-card__primary-description');
                                     const jobDesc = await page.evaluate(() => {
                                         return document.querySelector('.job-details-jobs-unified-top-card__primary-description').innerText;
@@ -344,9 +301,9 @@ class PuppeteerManagerLinkedin {
                             this.postData.user_id = this.userID;
                             this.postData.tags = this.tags;
                             this.postData.data = jobs;
-                            // fs.appendFileSync('./data.txt', JSON.stringify(this.postData, null, 2));
-                            // await this.sendData(this.postData);
-                            console.log(this.postData);
+                            fs.appendFileSync('./data.txt', JSON.stringify(this.postData, null, 2));
+                            await this.sendData(this.postData);
+                            // console.log(this.postData);
                         } else {
                             console.log("No job data");
                         }
