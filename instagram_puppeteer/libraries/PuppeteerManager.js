@@ -582,6 +582,36 @@ class PuppeteerManager {
                     //     await this.sleep(4000);
                     // }
 
+                    const selector = 'div[role="dialog"] > div:nth-child(2)';
+
+                    // scroll selector into view
+                    await page.evaluate(selector => {
+                        const element = document.querySelector(selector);
+                        if ( element ) {
+                            element.scrollTop = element.offsetHeight;
+                            console.error(`Scrolled to selector ${selector}`);
+
+                            for (var j = 0; j < postToLikePerScroll; j++) {
+                                console.log(like_posts)
+                                await page.evaluate((likePosts) => {
+                                    // return document.querySelectorAll('article')[likePosts].querySelectorAll('section')[0].querySelectorAll('span')[0].click();
+                                    // return document.querySelectorAll('article')[likePosts].querySelector('div').children[2].querySelector('div').children[0].querySelector('div > span').querySelectorAll('div')[0].click();
+                                    return document.querySelectorAll('article')[likePosts].querySelectorAll('div > span > div')[1].click();
+                                }, like_posts)
+
+                                like_posts++;
+                            }
+                            
+                        } else {
+                            console.error(`cannot find selector ${selector}`);
+                        }
+                    }, selector);
+
+                    // await page.evaluate(() => {
+                    //   window.scrollTo(0, window.document.body.scrollHeight);
+                    // });
+
+
                     let like_posts = 0;
                     for (var i = 0; i < z_scroll_number; i++) {
                         await page.evaluate(() => {
