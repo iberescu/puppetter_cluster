@@ -607,6 +607,38 @@ class PuppeteerManager {
                         }
                     }, selector);
 
+                    const scrollDown = async (
+                      page: Page,
+                      distance: number
+                    ): Promise<void> => {
+                      await page._client.send("Input.synthesizeScrollGesture", {
+                        x: 0,
+                        y: 0,
+                        xDistance: 0,
+                        yDistance: distance
+                      })
+                    }
+
+                    const page: Page = el._page
+                    // Use the viewport height as a baseline to randomize each scroll distance.
+                    const viewportHeight: number = getViewportHeight(page)
+                    // Continue to scroll random distance until element is in viewport.
+                    while (!(await el.isIntersectingViewport())) {
+                        await scrollDown(page, randomDistance(viewportHeight))
+                        await page.waitForTimeout(randomInt(50, 500))
+
+                        for (var j = 0; j < postToLikePerScroll; j++) {
+                            console.log(like_posts)
+                            await page.evaluate((likePosts) => {
+                                // return document.querySelectorAll('article')[likePosts].querySelectorAll('section')[0].querySelectorAll('span')[0].click();
+                                // return document.querySelectorAll('article')[likePosts].querySelector('div').children[2].querySelector('div').children[0].querySelector('div > span').querySelectorAll('div')[0].click();
+                                return document.querySelectorAll('article')[likePosts].querySelectorAll('div > span > div')[1].click();
+                            }, like_posts)
+
+                            like_posts++;
+                        }
+                    }
+
                     // await page.evaluate(() => {
                     //   window.scrollTo(0, window.document.body.scrollHeight);
                     // });
